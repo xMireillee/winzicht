@@ -70,7 +70,10 @@ export function InzichtenVraag() {
               <button
                 key={v}
                 type="button"
-                onClick={() => stel(v)}
+                onClick={() => {
+                  setVraag(v)
+                  document.getElementById("inzicht-vraag")?.focus()
+                }}
                 disabled={bezig}
                 className="rounded-full border border-border bg-secondary px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
               >

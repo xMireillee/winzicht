@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Building2,
   Sparkles,
+  ChartColumn,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -117,6 +118,10 @@ export function CommandPalette() {
           <CommandItem onSelect={() => ga("/klanten")}>
             <Users className="size-4" />
             Klanten
+          </CommandItem>
+          <CommandItem onSelect={() => ga("/analyse")}>
+            <ChartColumn className="size-4" />
+            Analyse
           </CommandItem>
           <CommandItem onSelect={() => ga("/inzichten")}>
             <Sparkles className="size-4" />

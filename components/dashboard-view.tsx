@@ -20,24 +20,17 @@ import {
   ArrowRight,
   ArrowUpRight,
   ArrowDownRight,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
   Clock,
   ClipboardList,
   Trophy,
   Lightbulb,
   AlertTriangle,
-  ChevronDown,
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeading } from "@/components/page-heading"
 import { UitslagStamp } from "@/components/uitslag-stamp"
-import { FeedbackQuote } from "@/components/feedback-quote"
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 import {
   berekenStats,
   berekenKwartaalWinrate,
@@ -47,9 +40,7 @@ import {
   gewogenTakeaway,
   berekenGewogenVerlies,
   berekenActies,
-  berekenSectorAnalyse,
   type DashboardActie,
-  type SectorAnalyseStat,
 } from "@/lib/dashboard-stats"
 import { formatDatum, isOnvolledig } from "@/lib/aanbesteding-utils"
 import { KwartaalRapportButton, type KwartaalOptie } from "@/components/kwartaal-rapport-button"
@@ -90,51 +81,6 @@ function KpiTile({
   )
 }
 
-function ProcesAspectGroup({
-  label,
-  aantal,
-  notities,
-}: {
-  label: string
-  aantal: number
-  notities: { klant: string; kenmerk: string; tekst: string; thema: string }[]
-}) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="rounded-lg border border-border">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-        aria-expanded={open}
-      >
-        <span className="text-sm font-semibold text-foreground">{label}</span>
-        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="tnum rounded-md bg-secondary px-2 py-0.5 font-medium text-foreground">{aantal}</span>
-          <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} aria-hidden="true" />
-        </span>
-      </button>
-      {open && (
-        <ul className="flex flex-col gap-3 border-t border-border px-4 py-3">
-          {notities.map((n, i) => (
-            <li key={i}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-mono text-xs text-muted-foreground">{[n.klant, n.kenmerk].filter(Boolean).join(" · ")}</p>
-                {n.thema && (
-                  <span className="shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                    {n.thema}
-                  </span>
-                )}
-              </div>
-              <FeedbackQuote tekst={n.tekst} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 const ACTIE_STIJL: Record<DashboardActie["type"], { icon: typeof Clock; color: string; bg: string }> = {
   bezwaar: { icon: Clock, color: "var(--lost)", bg: "var(--lost-bg)" },
   evaluatie: { icon: ClipboardList, color: "var(--ink)", bg: "var(--secondary)" },
@@ -143,33 +89,12 @@ const ACTIE_STIJL: Record<DashboardActie["type"], { icon: typeof Clock; color: s
 
 type ThemaWeergave = "gewogen" | "frequentie"
 
-type SectorSortKey = "sector" | "winrate" | "binnenUrenPct" | "gemAfwijking" | "gemKlantcontact" | "metEvaluatie"
-
-function sorteerSectorAnalyse(
-  rijen: SectorAnalyseStat[],
-  sort: { key: SectorSortKey; dir: "asc" | "desc" } | null,
-): SectorAnalyseStat[] {
-  if (!sort) return rijen
-  const { key, dir } = sort
-  const factor = dir === "asc" ? 1 : -1
-  return [...rijen].sort((a, b) => {
-    if (key === "sector") return factor * a.sector.localeCompare(b.sector)
-    const av = a[key]
-    const bv = b[key]
-    if (av == null && bv == null) return 0
-    if (av == null) return 1 // ontbrekende waarden altijd onderaan, ongeacht richting
-    if (bv == null) return -1
-    return factor * ((av as number) - (bv as number))
-  })
-}
-
 export function DashboardView() {
   const router = useRouter()
   const { data, isLoading } = useSWR<{ items: Aanbesteding[] }>("/api/aanbestedingen", fetcher)
   const items = useMemo(() => data?.items ?? [], [data])
 
   const [themaWeergave, setThemaWeergave] = useState<ThemaWeergave>("gewogen")
-  const [sectorSort, setSectorSort] = useState<{ key: SectorSortKey; dir: "asc" | "desc" } | null>(null)
 
   const stats = useMemo(() => berekenStats(items), [items])
   const kwartalen = useMemo(() => berekenKwartaalWinrate(items), [items])
@@ -178,34 +103,6 @@ export function DashboardView() {
   const acties = useMemo(() => berekenActies(items), [items])
   const takeaway = useMemo(() => themaTakeaway(stats.themas), [stats.themas])
   const gewogen = useMemo(() => berekenGewogenVerlies(items), [items])
-  const sectorAnalyse = useMemo(() => berekenSectorAnalyse(items), [items])
-  const sectorAnalyseWeergave = useMemo(
-    () => sorteerSectorAnalyse(sectorAnalyse, sectorSort),
-    [sectorAnalyse, sectorSort],
-  )
-  const wisselSectorSort = (key: SectorSortKey) =>
-    setSectorSort((cur) => (cur?.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "sector" ? "asc" : "desc" }))
-
-  const sectorSortHeader = (label: string, key: SectorSortKey, alignRight?: boolean) => {
-    const actief = sectorSort?.key === key
-    const Icon = actief ? (sectorSort.dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown
-    return (
-      <TableHead className={alignRight ? "text-right" : undefined}>
-        <button
-          type="button"
-          onClick={() => wisselSectorSort(key)}
-          className={cn(
-            "inline-flex items-center gap-1 transition-colors hover:text-foreground",
-            alignRight && "flex-row-reverse",
-            actief ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {label}
-          <Icon className="size-3" aria-hidden="true" />
-        </button>
-      </TableHead>
-    )
-  }
   const gewogenTk = useMemo(() => gewogenTakeaway(gewogen.themas), [gewogen.themas])
   const onvolledigAantal = useMemo(() => items.filter((a) => isOnvolledig(a)).length, [items])
   const rapportKwartalen = useMemo<KwartaalOptie[]>(() => {
@@ -604,163 +501,6 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* Verdieping: sector, proces en leerpunten */}
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <p className="eyebrow">Verdieping</p>
-          <h2 className="text-h3">Proces &amp; interne evaluatie</h2>
-        </div>
-
-        {stats.proces.metEvaluatie === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">Nog geen interne evaluaties ingevuld.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <KpiTile
-              label="Binnen budget"
-              value={stats.proces.binnenUrenPct != null ? `${Math.round(stats.proces.binnenUrenPct * 100)}%` : "—"}
-              sub={`${stats.proces.binnenUrenJa} van ${stats.proces.binnenUrenJa + stats.proces.binnenUrenNee} projecten`}
-            />
-            <KpiTile
-              label="Gem. afwijking uren"
-              value={stats.proces.gemAfwijking != null ? `${Math.round(stats.proces.gemAfwijking)}%` : "—"}
-              sub="t.o.v. de raming"
-            />
-            <KpiTile
-              label="Klantcontact"
-              value={stats.proces.gemKlantcontact != null ? `${stats.proces.gemKlantcontact.toFixed(1)} / 5` : "—"}
-              sub={`op basis van ${stats.proces.metEvaluatie} evaluaties`}
-            />
-          </div>
-        )}
-
-        <Card className="flex flex-col p-5">
-          <h3 className="text-h3">Sector-analyse</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Winrate naast procescijfers, per sector — zo wordt zichtbaar of een sector niet alleen vaker verloren
-            wordt maar bijvoorbeeld ook structureel meer uren kost of lastiger samenwerkt.
-          </p>
-          {sectorAnalyse.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">Nog geen sectoren met data.</p>
-          ) : (
-            <Table className="mt-4">
-              <TableHeader>
-                <TableRow>
-                  {sectorSortHeader("Sector", "sector")}
-                  {sectorSortHeader("Winrate", "winrate")}
-                  {sectorSortHeader("Binnen budget", "binnenUrenPct")}
-                  {sectorSortHeader("Gem. afwijking uren", "gemAfwijking")}
-                  {sectorSortHeader("Klantcontact", "gemKlantcontact")}
-                  {sectorSortHeader("Evaluaties", "metEvaluatie", true)}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sectorAnalyseWeergave.map((s) => {
-                  const winratePctSector = s.winrate != null ? Math.round(s.winrate * 100) : null
-                  const laag = winratePctSector != null && winratePctSector < 50
-                  return (
-                    <TableRow key={s.sector}>
-                      <TableCell className="whitespace-normal font-medium text-foreground">{s.sector}</TableCell>
-                      <TableCell>
-                        <span
-                          className="tnum shrink-0 rounded-md px-2 py-0.5 text-xs font-medium"
-                          style={
-                            winratePctSector == null
-                              ? { color: "var(--muted-foreground)" }
-                              : laag
-                                ? { color: "var(--lost)", backgroundColor: "var(--lost-bg)" }
-                                : { color: "var(--won)", backgroundColor: "var(--won-bg)" }
-                          }
-                        >
-                          {winratePctSector != null ? `${winratePctSector}%` : "—"}
-                        </span>
-                        <span className="ml-1.5 font-mono text-xs text-muted-foreground">
-                          ({s.gewonnen}W · {s.verloren}V)
-                        </span>
-                      </TableCell>
-                      <TableCell className="tnum">
-                        {s.binnenUrenPct != null ? `${Math.round(s.binnenUrenPct * 100)}%` : "—"}
-                      </TableCell>
-                      <TableCell className="tnum">
-                        {s.gemAfwijking != null ? `${Math.round(s.gemAfwijking)}%` : "—"}
-                      </TableCell>
-                      <TableCell className="tnum">
-                        {s.gemKlantcontact != null ? `${s.gemKlantcontact.toFixed(1)} / 5` : "—"}
-                      </TableCell>
-                      <TableCell className="tnum text-right text-muted-foreground">{s.metEvaluatie}</TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          )}
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Sectoren met weinig evaluaties zijn minder betrouwbaar — check de kolom "Evaluaties" voor de steekproefgrootte.
-          </p>
-        </Card>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card className="flex flex-col p-5">
-            <h3 className="text-h3">Terugkerende leerpunten</h3>
-            {stats.leerpunten.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
-            ) : (
-              <ul className="mt-4 flex flex-col gap-2.5">
-                {stats.leerpunten.slice(0, 8).map((l) => (
-                  <li key={l.leerpunt} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-pretty">{l.leerpunt}</span>
-                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                      {l.aantal}×
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card className="flex flex-col p-5">
-            <h3 className="text-h3">Terugkerende procesthema's</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gecodeerd uit de toelichtingen bij planning, klantinput, uren en samenwerking.
-            </p>
-            {stats.proces.procesThemas.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Nog geen procesthema&apos;s gecodeerd — kies er een bij de toelichting in een interne evaluatie.
-              </p>
-            ) : (
-              <ul className="mt-4 flex flex-col gap-2.5">
-                {stats.proces.procesThemas.slice(0, 8).map((t) => (
-                  <li key={t.thema} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-pretty">{t.thema}</span>
-                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                      {t.aantal}×
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
-
-        {stats.proces.aspecten.some((a) => a.aantal > 0) && (
-          <Card className="flex flex-col gap-3 p-5">
-            <div>
-              <h3 className="text-h3">Lessen uit de procesevaluatie</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Toelichtingen uit interne evaluaties, gegroepeerd per procesaspect.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              {stats.proces.aspecten
-                .filter((a) => a.aantal > 0)
-                .map((a) => (
-                  <ProcesAspectGroup key={a.key} label={a.label} aantal={a.aantal} notities={a.notities} />
-                ))}
-            </div>
-          </Card>
-        )}
-      </div>
     </div>
   )
 }
