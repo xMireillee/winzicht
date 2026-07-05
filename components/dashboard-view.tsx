@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeading } from "@/components/page-heading"
 import { UitslagStamp } from "@/components/uitslag-stamp"
 import { FeedbackQuote } from "@/components/feedback-quote"
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import {
   berekenStats,
@@ -43,6 +44,7 @@ import {
   gewogenTakeaway,
   berekenGewogenVerlies,
   berekenActies,
+  berekenSectorAnalyse,
   type DashboardActie,
 } from "@/lib/dashboard-stats"
 import { formatDatum, isOnvolledig } from "@/lib/aanbesteding-utils"
@@ -144,6 +146,7 @@ export function DashboardView() {
   const acties = useMemo(() => berekenActies(items), [items])
   const takeaway = useMemo(() => themaTakeaway(stats.themas), [stats.themas])
   const gewogen = useMemo(() => berekenGewogenVerlies(items), [items])
+  const sectorAnalyse = useMemo(() => berekenSectorAnalyse(items), [items])
   const gewogenTk = useMemo(() => gewogenTakeaway(gewogen.themas), [gewogen.themas])
   const onvolledigAantal = useMemo(() => items.filter((a) => isOnvolledig(a)).length, [items])
   const rapportKwartalen = useMemo<KwartaalOptie[]>(() => {
@@ -573,59 +576,88 @@ export function DashboardView() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card className="flex flex-col p-5">
-            <h3 className="text-h3">Winrate per sector</h3>
-            {stats.sectoren.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nog geen sectoren met percelen.</p>
-            ) : (
-              <ul className="mt-4 flex flex-col gap-2.5">
-                {stats.sectoren.map((s) => {
-                  const pct = s.winrate != null ? Math.round(s.winrate * 100) : null
-                  const laag = pct != null && pct < 50
+        <Card className="flex flex-col p-5">
+          <h3 className="text-h3">Sector-analyse</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Winrate naast procescijfers, per sector — zo wordt zichtbaar of een sector niet alleen vaker verloren
+            wordt maar bijvoorbeeld ook structureel meer uren kost of lastiger samenwerkt.
+          </p>
+          {sectorAnalyse.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">Nog geen sectoren met data.</p>
+          ) : (
+            <Table className="mt-4">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sector</TableHead>
+                  <TableHead>Winrate</TableHead>
+                  <TableHead>Binnen budget</TableHead>
+                  <TableHead>Gem. afwijking uren</TableHead>
+                  <TableHead>Klantcontact</TableHead>
+                  <TableHead className="text-right">Evaluaties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sectorAnalyse.map((s) => {
+                  const winratePctSector = s.winrate != null ? Math.round(s.winrate * 100) : null
+                  const laag = winratePctSector != null && winratePctSector < 50
                   return (
-                    <li key={s.sector} className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-pretty">{s.sector}</span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {s.gewonnen} gewonnen · {s.verloren} verloren
-                        </span>
+                    <TableRow key={s.sector}>
+                      <TableCell className="whitespace-normal font-medium text-foreground">{s.sector}</TableCell>
+                      <TableCell>
                         <span
                           className="tnum shrink-0 rounded-md px-2 py-0.5 text-xs font-medium"
                           style={
-                            laag
-                              ? { color: "var(--lost)", backgroundColor: "var(--lost-bg)" }
-                              : { color: "var(--won)", backgroundColor: "var(--won-bg)" }
+                            winratePctSector == null
+                              ? { color: "var(--muted-foreground)" }
+                              : laag
+                                ? { color: "var(--lost)", backgroundColor: "var(--lost-bg)" }
+                                : { color: "var(--won)", backgroundColor: "var(--won-bg)" }
                           }
                         >
-                          {pct != null ? `${pct}%` : "—"}
+                          {winratePctSector != null ? `${winratePctSector}%` : "—"}
                         </span>
-                      </span>
-                    </li>
+                        <span className="ml-1.5 font-mono text-xs text-muted-foreground">
+                          ({s.gewonnen}W · {s.verloren}V)
+                        </span>
+                      </TableCell>
+                      <TableCell className="tnum">
+                        {s.binnenUrenPct != null ? `${Math.round(s.binnenUrenPct * 100)}%` : "—"}
+                      </TableCell>
+                      <TableCell className="tnum">
+                        {s.gemAfwijking != null ? `${Math.round(s.gemAfwijking)}%` : "—"}
+                      </TableCell>
+                      <TableCell className="tnum">
+                        {s.gemKlantcontact != null ? `${s.gemKlantcontact.toFixed(1)} / 5` : "—"}
+                      </TableCell>
+                      <TableCell className="tnum text-right text-muted-foreground">{s.metEvaluatie}</TableCell>
+                    </TableRow>
                   )
                 })}
-              </ul>
-            )}
-          </Card>
+              </TableBody>
+            </Table>
+          )}
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Sectoren met weinig evaluaties zijn minder betrouwbaar — check de kolom "Evaluaties" voor de steekproefgrootte.
+          </p>
+        </Card>
 
-          <Card className="flex flex-col p-5">
-            <h3 className="text-h3">Terugkerende leerpunten</h3>
-            {stats.leerpunten.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
-            ) : (
-              <ul className="mt-4 flex flex-col gap-2.5">
-                {stats.leerpunten.slice(0, 8).map((l) => (
-                  <li key={l.leerpunt} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-pretty">{l.leerpunt}</span>
-                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                      {l.aantal}×
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
+        <Card className="flex flex-col p-5">
+          <h3 className="text-h3">Terugkerende leerpunten</h3>
+          {stats.leerpunten.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
+          ) : (
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {stats.leerpunten.slice(0, 8).map((l) => (
+                <li key={l.leerpunt} className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-pretty">{l.leerpunt}</span>
+                  <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
+                    {l.aantal}×
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
         {stats.proces.aspecten.some((a) => a.aantal > 0) && (
           <Card className="flex flex-col gap-3 p-5">

@@ -217,6 +217,70 @@ export function berekenStats(items: Aanbesteding[]) {
   }
 }
 
+export interface SectorAnalyseStat {
+  sector: string
+  gewonnen: number
+  verloren: number
+  winrate: number | null
+  metEvaluatie: number
+  binnenUrenPct: number | null
+  gemAfwijking: number | null
+  gemKlantcontact: number | null
+}
+
+/**
+ * Winrate + procescijfers per sector, zodat zichtbaar wordt waar niet alleen vaker
+ * wordt verloren maar ook waar de urenbesteding of samenwerking structureel afwijkt.
+ */
+export function berekenSectorAnalyse(items: Aanbesteding[]): SectorAnalyseStat[] {
+  const map = new Map<string, Aanbesteding[]>()
+  for (const a of items) {
+    const sec = a.sector || "Onbekend"
+    const groep = map.get(sec) ?? []
+    groep.push(a)
+    map.set(sec, groep)
+  }
+
+  const result: SectorAnalyseStat[] = Array.from(map.entries()).map(([sector, groep]) => {
+    const percelen = groep.flatMap((a) => a.percelen)
+    const gewonnen = percelen.filter((p) => p.uitslag === "Gewonnen").length
+    const verloren = percelen.filter((p) => p.uitslag === "Verloren").length
+    const winrate = gewonnen + verloren > 0 ? gewonnen / (gewonnen + verloren) : null
+
+    const metEval = groep.filter((a) => a.evaluatie)
+    const binnenUrenJa = metEval.filter((a) => a.evaluatie?.binnenUren === "Ja").length
+    const binnenUrenNee = metEval.filter((a) => a.evaluatie?.binnenUren === "Nee").length
+    const urenBekend = binnenUrenJa + binnenUrenNee
+    const binnenUrenPct = urenBekend > 0 ? binnenUrenJa / urenBekend : null
+
+    const afwijkingen = metEval
+      .map((a) => a.evaluatie?.afwijking)
+      .filter((n): n is number => typeof n === "number")
+    const gemAfwijking = afwijkingen.length > 0 ? afwijkingen.reduce((a, b) => a + b, 0) / afwijkingen.length : null
+
+    const klantcontacten = metEval
+      .map((a) => a.evaluatie?.klantcontact)
+      .filter((n): n is number => typeof n === "number")
+    const gemKlantcontact =
+      klantcontacten.length > 0 ? klantcontacten.reduce((a, b) => a + b, 0) / klantcontacten.length : null
+
+    return {
+      sector,
+      gewonnen,
+      verloren,
+      winrate,
+      metEvaluatie: metEval.length,
+      binnenUrenPct,
+      gemAfwijking,
+      gemKlantcontact,
+    }
+  })
+
+  return result
+    .filter((s) => s.gewonnen + s.verloren > 0 || s.metEvaluatie > 0)
+    .sort((a, b) => b.gewonnen + b.verloren - (a.gewonnen + a.verloren))
+}
+
 // ── Extra dashboard-afgeleiden (volledig client-side berekend) ──────────────
 
 export interface KwartaalWinrate {
