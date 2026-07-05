@@ -19,6 +19,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id: _id, aangemaaktOp: _op, aangemaaktDoor: _door, ...data } = payload
 
+  // Het bewerkformulier stuurt geen debrief mee; neem een eerder gegenereerde
+  // debrief over zodat die niet verloren gaat bij het opslaan van wijzigingen.
+  if (!("debrief" in data)) {
+    const { data: bestaand } = await supabase.from("aanbestedingen").select("data").eq("id", id).single()
+    const bestaandeDebrief = (bestaand?.data as Partial<Aanbesteding> | null)?.debrief
+    if (bestaandeDebrief) {
+      ;(data as Partial<Aanbesteding>).debrief = bestaandeDebrief
+    }
+  }
+
   const { data: updated, error } = await supabase
     .from("aanbestedingen")
     .update({ data })

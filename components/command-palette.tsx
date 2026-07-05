@@ -12,6 +12,7 @@ import {
   Plus,
   AlertTriangle,
   Building2,
+  Sparkles,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -116,6 +117,10 @@ export function CommandPalette() {
           <CommandItem onSelect={() => ga("/klanten")}>
             <Users className="size-4" />
             Klanten
+          </CommandItem>
+          <CommandItem onSelect={() => ga("/inzichten")}>
+            <Sparkles className="size-4" />
+            Inzichten
           </CommandItem>
           <CommandItem onSelect={() => ga("/instellingen/labels")}>
             <Settings className="size-4" />

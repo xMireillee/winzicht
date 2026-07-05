@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, Users, Plus, LogOut, Menu, X, MessageSquareQuote, Settings, Search } from "lucide-react"
+import { LayoutDashboard, FileText, Users, Plus, LogOut, Menu, X, MessageSquareQuote, Settings, Search, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/overzicht", label: "Gunningsbrieven", icon: FileText },
   { href: "/feedback", label: "Feedback zoeken", icon: MessageSquareQuote },
   { href: "/klanten", label: "Klanten", icon: Users },
+  { href: "/inzichten", label: "Inzichten", icon: Sparkles },
 ] as const
 
 function isActief(pathname: string, href: string) {

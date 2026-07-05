@@ -43,6 +43,13 @@ export interface InterneEvaluatie {
   samenwerkingThema?: string
 }
 
+// Door AI gegenereerde debrief van één aanbesteding; wordt in de JSONB-data bewaard.
+export interface Debrief {
+  tekst: string
+  gegenereerdOp: string // ISO-timestamp, server-side gezet
+  door: string // e-mail van wie de debrief genereerde
+}
+
 export interface Aanbesteding {
   id: string
   opdrachtgever: string
@@ -56,6 +63,7 @@ export interface Aanbesteding {
   aangemaaktDoor?: string
   percelen: Perceel[]
   evaluatie: InterneEvaluatie | null
+  debrief?: Debrief | null
 }
 
 // Wat de extractie-API teruggeeft (zonder id/metadata).

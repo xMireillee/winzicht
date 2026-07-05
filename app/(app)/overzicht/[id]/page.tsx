@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ReviewForm } from "@/components/review-form"
+import { DebriefCard } from "@/components/debrief-card"
 import { legeEvaluatie, normaliseerExtractie } from "@/lib/aanbesteding-utils"
-import type { Aanbesteding } from "@/lib/types"
+import type { Aanbesteding, Debrief } from "@/lib/types"
 
 export default async function BewerkenPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,6 +19,10 @@ export default async function BewerkenPage({ params }: { params: Promise<{ id: s
   }
 
   const raw = data.data as Record<string, unknown>
+  const debrief =
+    raw.debrief && typeof raw.debrief === "object" && typeof (raw.debrief as Debrief).tekst === "string"
+      ? (raw.debrief as Debrief)
+      : null
   const genormaliseerd = normaliseerExtractie(raw)
   const initial: Omit<Aanbesteding, "id" | "aangemaaktOp"> = {
     ...genormaliseerd,
@@ -40,6 +45,7 @@ export default async function BewerkenPage({ params }: { params: Promise<{ id: s
           Pas de gegevens aan of vul de interne evaluatie in. Wijzigingen gelden voor alle collega&apos;s.
         </p>
       </div>
+      <DebriefCard id={id} initieel={debrief} />
       <ReviewForm initial={initial} mode="bewerken" id={id} showEvaluatie />
     </div>
   )
