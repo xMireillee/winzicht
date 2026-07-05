@@ -20,6 +20,9 @@ import {
   ArrowRight,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   Clock,
   ClipboardList,
   Trophy,
@@ -46,6 +49,7 @@ import {
   berekenActies,
   berekenSectorAnalyse,
   type DashboardActie,
+  type SectorAnalyseStat,
 } from "@/lib/dashboard-stats"
 import { formatDatum, isOnvolledig } from "@/lib/aanbesteding-utils"
 import { KwartaalRapportButton, type KwartaalOptie } from "@/components/kwartaal-rapport-button"
@@ -132,12 +136,33 @@ const ACTIE_STIJL: Record<DashboardActie["type"], { icon: typeof Clock; color: s
 
 type ThemaWeergave = "gewogen" | "frequentie"
 
+type SectorSortKey = "sector" | "winrate" | "binnenUrenPct" | "gemAfwijking" | "gemKlantcontact" | "metEvaluatie"
+
+function sorteerSectorAnalyse(
+  rijen: SectorAnalyseStat[],
+  sort: { key: SectorSortKey; dir: "asc" | "desc" } | null,
+): SectorAnalyseStat[] {
+  if (!sort) return rijen
+  const { key, dir } = sort
+  const factor = dir === "asc" ? 1 : -1
+  return [...rijen].sort((a, b) => {
+    if (key === "sector") return factor * a.sector.localeCompare(b.sector)
+    const av = a[key]
+    const bv = b[key]
+    if (av == null && bv == null) return 0
+    if (av == null) return 1 // ontbrekende waarden altijd onderaan, ongeacht richting
+    if (bv == null) return -1
+    return factor * ((av as number) - (bv as number))
+  })
+}
+
 export function DashboardView() {
   const router = useRouter()
   const { data, isLoading } = useSWR<{ items: Aanbesteding[] }>("/api/aanbestedingen", fetcher)
   const items = useMemo(() => data?.items ?? [], [data])
 
   const [themaWeergave, setThemaWeergave] = useState<ThemaWeergave>("gewogen")
+  const [sectorSort, setSectorSort] = useState<{ key: SectorSortKey; dir: "asc" | "desc" } | null>(null)
 
   const stats = useMemo(() => berekenStats(items), [items])
   const kwartalen = useMemo(() => berekenKwartaalWinrate(items), [items])
@@ -147,6 +172,33 @@ export function DashboardView() {
   const takeaway = useMemo(() => themaTakeaway(stats.themas), [stats.themas])
   const gewogen = useMemo(() => berekenGewogenVerlies(items), [items])
   const sectorAnalyse = useMemo(() => berekenSectorAnalyse(items), [items])
+  const sectorAnalyseWeergave = useMemo(
+    () => sorteerSectorAnalyse(sectorAnalyse, sectorSort),
+    [sectorAnalyse, sectorSort],
+  )
+  const wisselSectorSort = (key: SectorSortKey) =>
+    setSectorSort((cur) => (cur?.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "sector" ? "asc" : "desc" }))
+
+  const sectorSortHeader = (label: string, key: SectorSortKey, alignRight?: boolean) => {
+    const actief = sectorSort?.key === key
+    const Icon = actief ? (sectorSort.dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown
+    return (
+      <TableHead className={alignRight ? "text-right" : undefined}>
+        <button
+          type="button"
+          onClick={() => wisselSectorSort(key)}
+          className={cn(
+            "inline-flex items-center gap-1 transition-colors hover:text-foreground",
+            alignRight && "flex-row-reverse",
+            actief ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {label}
+          <Icon className="size-3" aria-hidden="true" />
+        </button>
+      </TableHead>
+    )
+  }
   const gewogenTk = useMemo(() => gewogenTakeaway(gewogen.themas), [gewogen.themas])
   const onvolledigAantal = useMemo(() => items.filter((a) => isOnvolledig(a)).length, [items])
   const rapportKwartalen = useMemo<KwartaalOptie[]>(() => {
@@ -588,16 +640,16 @@ export function DashboardView() {
             <Table className="mt-4">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Sector</TableHead>
-                  <TableHead>Winrate</TableHead>
-                  <TableHead>Binnen budget</TableHead>
-                  <TableHead>Gem. afwijking uren</TableHead>
-                  <TableHead>Klantcontact</TableHead>
-                  <TableHead className="text-right">Evaluaties</TableHead>
+                  {sectorSortHeader("Sector", "sector")}
+                  {sectorSortHeader("Winrate", "winrate")}
+                  {sectorSortHeader("Binnen budget", "binnenUrenPct")}
+                  {sectorSortHeader("Gem. afwijking uren", "gemAfwijking")}
+                  {sectorSortHeader("Klantcontact", "gemKlantcontact")}
+                  {sectorSortHeader("Evaluaties", "metEvaluatie", true)}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sectorAnalyse.map((s) => {
+                {sectorAnalyseWeergave.map((s) => {
                   const winratePctSector = s.winrate != null ? Math.round(s.winrate * 100) : null
                   const laag = winratePctSector != null && winratePctSector < 50
                   return (
