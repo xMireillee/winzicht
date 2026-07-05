@@ -16,12 +16,24 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { ArrowRight, ArrowUpRight, ArrowDownRight, Clock, ClipboardList, Trophy, Lightbulb, AlertTriangle } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  ClipboardList,
+  Trophy,
+  Lightbulb,
+  AlertTriangle,
+  ChevronDown,
+} from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeading } from "@/components/page-heading"
 import { UitslagStamp } from "@/components/uitslag-stamp"
+import { FeedbackQuote } from "@/components/feedback-quote"
+import { cn } from "@/lib/utils"
 import {
   berekenStats,
   berekenKwartaalWinrate,
@@ -69,6 +81,44 @@ function KpiTile({
       </div>
       {sub && <p className="mt-1 text-sm text-muted-foreground">{sub}</p>}
     </Card>
+  )
+}
+
+function ProcesAspectGroup({
+  label,
+  aantal,
+  notities,
+}: {
+  label: string
+  aantal: number
+  notities: { klant: string; kenmerk: string; tekst: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-lg border border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="tnum rounded-md bg-secondary px-2 py-0.5 font-medium text-foreground">{aantal}</span>
+          <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} aria-hidden="true" />
+        </span>
+      </button>
+      {open && (
+        <ul className="flex flex-col gap-3 border-t border-border px-4 py-3">
+          {notities.map((n, i) => (
+            <li key={i}>
+              <p className="font-mono text-xs text-muted-foreground">{[n.klant, n.kenmerk].filter(Boolean).join(" · ")}</p>
+              <FeedbackQuote tekst={n.tekst} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -490,6 +540,110 @@ export function DashboardView() {
             </ul>
           )}
         </Card>
+      </div>
+
+      {/* Verdieping: sector, proces en leerpunten */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <p className="eyebrow">Verdieping</p>
+          <h2 className="text-h3">Proces &amp; interne evaluatie</h2>
+        </div>
+
+        {stats.proces.metEvaluatie === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">Nog geen interne evaluaties ingevuld.</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <KpiTile
+              label="Binnen budget"
+              value={stats.proces.binnenUrenPct != null ? `${Math.round(stats.proces.binnenUrenPct * 100)}%` : "—"}
+              sub={`${stats.proces.binnenUrenJa} van ${stats.proces.binnenUrenJa + stats.proces.binnenUrenNee} projecten`}
+            />
+            <KpiTile
+              label="Gem. afwijking uren"
+              value={stats.proces.gemAfwijking != null ? `${Math.round(stats.proces.gemAfwijking)}%` : "—"}
+              sub="t.o.v. de raming"
+            />
+            <KpiTile
+              label="Klantcontact"
+              value={stats.proces.gemKlantcontact != null ? `${stats.proces.gemKlantcontact.toFixed(1)} / 5` : "—"}
+              sub={`op basis van ${stats.proces.metEvaluatie} evaluaties`}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card className="flex flex-col p-5">
+            <h3 className="text-h3">Winrate per sector</h3>
+            {stats.sectoren.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">Nog geen sectoren met percelen.</p>
+            ) : (
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {stats.sectoren.map((s) => {
+                  const pct = s.winrate != null ? Math.round(s.winrate * 100) : null
+                  const laag = pct != null && pct < 50
+                  return (
+                    <li key={s.sector} className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-pretty">{s.sector}</span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {s.gewonnen} gewonnen · {s.verloren} verloren
+                        </span>
+                        <span
+                          className="tnum shrink-0 rounded-md px-2 py-0.5 text-xs font-medium"
+                          style={
+                            laag
+                              ? { color: "var(--lost)", backgroundColor: "var(--lost-bg)" }
+                              : { color: "var(--won)", backgroundColor: "var(--won-bg)" }
+                          }
+                        >
+                          {pct != null ? `${pct}%` : "—"}
+                        </span>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col p-5">
+            <h3 className="text-h3">Terugkerende leerpunten</h3>
+            {stats.leerpunten.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
+            ) : (
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {stats.leerpunten.slice(0, 8).map((l) => (
+                  <li key={l.leerpunt} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-pretty">{l.leerpunt}</span>
+                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
+                      {l.aantal}×
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+
+        {stats.proces.aspecten.some((a) => a.aantal > 0) && (
+          <Card className="flex flex-col gap-3 p-5">
+            <div>
+              <h3 className="text-h3">Lessen uit de procesevaluatie</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Toelichtingen uit interne evaluaties, gegroepeerd per procesaspect.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {stats.proces.aspecten
+                .filter((a) => a.aantal > 0)
+                .map((a) => (
+                  <ProcesAspectGroup key={a.key} label={a.label} aantal={a.aantal} notities={a.notities} />
+                ))}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   )
