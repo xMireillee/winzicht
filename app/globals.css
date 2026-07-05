@@ -1,0 +1,211 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Brand fonts: Archivo grotesque for all UI + headings, Fraunces for the editorial
+     italic accent in page titles, IBM Plex Mono for kenmerken/scores/eyebrows. */
+  --font-heading: var(--font-archivo), 'Archivo Fallback';
+  --font-sans: var(--font-archivo), 'Archivo Fallback';
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-plex-mono), 'IBM Plex Mono Fallback';
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-faint: var(--faint);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-deep: var(--ink-deep);
+  --color-won: var(--won);
+  --color-won-foreground: var(--won-foreground);
+  --color-won-bg: var(--won-bg);
+  --color-lost: var(--lost);
+  --color-lost-foreground: var(--lost-foreground);
+  --color-lost-bg: var(--lost-bg);
+  --color-ai: var(--ai);
+  --color-ai-bg: var(--ai-bg);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem; /* 10px — card corner rounding */
+
+  /* ── Corus brand tokens (exact) ───────────────────────────
+     Retune the whole app from these lines. */
+  --ink: #201f3e;       /* Corus-indigo: tekst, UI-elementen op lichte vlakken */
+  --ink-foreground: #ffffff; /* tekst op ink-vlakken (sticky bar) */
+  --ink-deep: #110529;  /* logo-indigo: zijbalk-achtergrond */
+  --accent: #54ae93;    /* Corus-jadegroen: primaire CTA's, links, grafieklijnen */
+  --paper: #f6f6f9;     /* paginaachtergrond */
+  --won: #1e6b4f;       /* gewonnen */
+  --won-bg: #eaf4ef;
+  --lost: #b23a2c;      /* verloren */
+  --lost-bg: #faeeec;
+  --ai: #5b58a6;        /* uitsluitend voor AI-veldmarkeringen */
+  --ai-bg: #f4f4fb;
+
+  /* Surfaces */
+  --background: var(--paper);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+
+  /* Text: ink 100% / 65% / 45% */
+  --foreground: var(--ink);
+  --muted-foreground: #201f3ea6; /* --text-2: secundaire tekst */
+  --faint: #201f3e73;            /* --text-3: tertiaire tekst */
+
+  /* Primary = ink */
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+
+  /* Accent = jadegroen. Green buttons use --ink-deep text (never white). */
+  --accent-foreground: var(--ink-deep);
+  --accent-strong: #0e7157; /* AA-safe accent for links/text on paper */
+
+  /* Neutral fills tinted from ink */
+  --secondary: #ecebf2;
+  --secondary-foreground: var(--ink);
+  --muted: #edecf2;
+
+  --destructive: var(--lost);
+  --destructive-foreground: #ffffff;
+
+  /* Borders: ink @ ~12% over paper */
+  --border: #201f3e1f;
+  --input: #201f3e33;
+  --ring: var(--accent);
+
+  --won-foreground: #ffffff;
+  --lost-foreground: #ffffff;
+
+  --chart-1: var(--ink);
+  --chart-2: var(--accent);
+  --chart-3: var(--lost);
+  --chart-4: #6e6d82;
+  --chart-5: #c3c3d0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'cv01', 'ss01';
+  }
+  html {
+    @apply font-sans;
+  }
+
+  /* Tabular figures for all numeric UI (KPIs, scores, tables) */
+  .tnum,
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Type scale (no ad-hoc sizes) ───────────────────────── */
+  .text-display {
+    @apply font-heading text-3xl font-bold leading-tight tracking-tight md:text-4xl;
+    text-wrap: balance;
+  }
+  .text-h2 {
+    @apply font-heading text-xl font-semibold leading-snug md:text-2xl;
+    text-wrap: balance;
+  }
+  .text-h3 {
+    @apply font-heading text-lg font-semibold leading-snug;
+  }
+  .text-body {
+    @apply text-base leading-relaxed;
+  }
+  .text-caption {
+    @apply text-sm leading-normal text-muted-foreground;
+  }
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.15em];
+    color: var(--faint);
+  }
+
+  /* Editorial bold+italic accent — Corus "Ja, ik wil meer impact" character.
+     Use sparingly: one accent per page title. */
+  .display-accent {
+    @apply font-display italic font-normal;
+    color: var(--accent-strong);
+  }
+
+  /* Result pill: straight, no border, no rotation — dot + word. */
+  .result-pill {
+    @apply inline-flex items-center gap-1.5 font-sans font-semibold;
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.8125rem;
+    line-height: 1.1;
+  }
+  .result-pill[data-size='sm'] {
+    padding: 0.1rem 0.45rem;
+    font-size: 0.75rem;
+  }
+  .result-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+  }
+
+  /* AI-filled field indicator: tinted background + dot, cleared once edited */
+  .ai-filled {
+    background-color: var(--ai-bg);
+    border-color: color-mix(in srgb, var(--ai) 35%, var(--input));
+  }
+
+  /* Visible focus everywhere */
+  :where(a, button, input, textarea, select, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
