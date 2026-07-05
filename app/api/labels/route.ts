@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { PROCES_ASPECTEN } from "@/lib/constants"
-import type { Aanbesteding, InterneEvaluatie } from "@/lib/types"
+import type { Aanbesteding } from "@/lib/types"
 
 type Soort = "thema" | "leerpunt" | "procesthema"
 const GELDIGE_SOORTEN: Soort[] = ["thema", "leerpunt", "procesthema"]
@@ -51,9 +51,8 @@ async function herschrijfLabel(
       }
     } else if (soort === "procesthema" && d.evaluatie) {
       for (const asp of PROCES_ASPECTEN) {
-        const key = asp.themaKey as keyof InterneEvaluatie
-        if (d.evaluatie[key] === van) {
-          ;(d.evaluatie as Record<string, unknown>)[key] = naar
+        if (d.evaluatie[asp.themaKey] === van) {
+          d.evaluatie[asp.themaKey] = naar
           veranderd = true
         }
       }
