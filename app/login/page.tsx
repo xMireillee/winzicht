@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 
+const MIN_WACHTWOORD_LENGTE = 10
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -15,7 +17,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [melding, setMelding] = useState<string | null>(null)
-  const [mode, setMode] = useState<"login" | "reset">("login")
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -26,7 +27,12 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
     setLoading(false)
     if (error) {
-      setError("Inloggen mislukt. Controleer je e-mailadres en wachtwoord.")
+      const msg = error.message.toLowerCase()
+      if (msg.includes("email not confirmed")) {
+        setError("Je account is nog niet bevestigd. Klik eerst op de link in de bevestigingsmail.")
+      } else {
+        setError("Inloggen mislukt. Controleer je e-mailadres en wachtwoord.")
+      }
       return
     }
     router.push("/nieuw")
@@ -40,55 +46,26 @@ export default function LoginPage() {
       setError("Vul een e-mailadres en wachtwoord in.")
       return
     }
+    if (password.length < MIN_WACHTWOORD_LENGTE) {
+      setError(`Kies een wachtwoord van minimaal ${MIN_WACHTWOORD_LENGTE} tekens.`)
+      return
+    }
     setLoading(true)
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-        redirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback`,
-      }),
+      body: JSON.stringify({ email, password }),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     setLoading(false)
     if (!res.ok) {
       setError(data.error ?? "Account aanmaken mislukt.")
       return
     }
-    setMelding("Account aangemaakt. Je kunt nu direct inloggen met dit e-mailadres en wachtwoord.")
-  }
-
-  async function handleReset() {
-    setError(null)
-    setMelding(null)
-    if (!email || !password) {
-      setError("Vul je e-mailadres en een nieuw wachtwoord in.")
-      return
-    }
-    setLoading(true)
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (!res.ok) {
-      setError(data.error ?? "Wachtwoord herstellen mislukt.")
-      return
-    }
     setPassword("")
-    setMode("login")
-    setMelding("Je wachtwoord is bijgewerkt. Log nu in met je nieuwe wachtwoord.")
-  }
-
-  function toggleReset() {
-    setError(null)
-    setMelding(null)
-    setPassword("")
-    setMode((m) => (m === "login" ? "reset" : "login"))
+    setMelding(
+      "Er is een bevestigingsmail verstuurd. Klik op de link in die mail om je account te activeren; daarna kun je hier inloggen.",
+    )
   }
 
   return (
@@ -102,22 +79,12 @@ export default function LoginPage() {
         </div>
 
         <Card className="p-6">
-          <h2 className="font-heading text-xl font-semibold">
-            {mode === "login" ? "Inloggen" : "Wachtwoord herstellen"}
-          </h2>
+          <h2 className="font-heading text-xl font-semibold">Inloggen</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "login"
-              ? "Log in met je Corus Advies-account om verder te gaan."
-              : "Vul je e-mailadres in en kies een nieuw wachtwoord."}
+            Log in met je Corus Advies-account om verder te gaan.
           </p>
 
-          <form
-            onSubmit={mode === "login" ? handleLogin : (e) => {
-              e.preventDefault()
-              handleReset()
-            }}
-            className="mt-6 flex flex-col gap-4"
-          >
+          <form onSubmit={handleLogin} className="mt-6 flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">E-mailadres</Label>
               <Input
@@ -131,12 +98,13 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password">{mode === "login" ? "Wachtwoord" : "Nieuw wachtwoord"}</Label>
+              <Label htmlFor="password">Wachtwoord</Label>
               <Input
                 id="password"
                 type="password"
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                autoComplete="current-password"
                 required
+                minLength={MIN_WACHTWOORD_LENGTE}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -154,29 +122,17 @@ export default function LoginPage() {
             )}
 
             <div className="flex flex-col gap-2">
-              {mode === "login" ? (
-                <>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Bezig…" : "Inloggen"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleSignUp} disabled={loading}>
-                    Account aanmaken
-                  </Button>
-                </>
-              ) : (
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Bezig…" : "Nieuw wachtwoord instellen"}
-                </Button>
-              )}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Bezig…" : "Inloggen"}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleSignUp} disabled={loading}>
+                Account aanmaken
+              </Button>
             </div>
 
-            <button
-              type="button"
-              onClick={toggleReset}
-              className="mt-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              {mode === "login" ? "Wachtwoord vergeten?" : "Terug naar inloggen"}
-            </button>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Wachtwoord vergeten? Vraag de beheerder om je wachtwoord opnieuw in te stellen.
+            </p>
           </form>
         </Card>
       </div>
