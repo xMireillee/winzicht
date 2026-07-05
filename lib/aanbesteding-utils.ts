@@ -37,6 +37,10 @@ export function legeEvaluatie(): InterneEvaluatie {
     klantinputToelichting: "",
     urenToelichting: "",
     samenwerkingToelichting: "",
+    planningThema: "",
+    klantinputThema: "",
+    urenThema: "",
+    samenwerkingThema: "",
   }
 }
 

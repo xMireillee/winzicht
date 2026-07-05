@@ -35,6 +35,12 @@ export interface InterneEvaluatie {
   klantinputToelichting: string
   urenToelichting: string
   samenwerkingToelichting: string
+  // Gecodeerd procesthema per aspect (optioneel), zodat toelichtingen groepeerbaar worden
+  // net als thema1/thema2 bij feedbackcriteria. Ontbreekt bij evaluaties van vóór deze functie.
+  planningThema?: string
+  klantinputThema?: string
+  urenThema?: string
+  samenwerkingThema?: string
 }
 
 export interface Aanbesteding {

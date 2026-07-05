@@ -5,7 +5,12 @@ export interface ProcesAspectStat {
   key: string
   label: string
   aantal: number
-  notities: { klant: string; kenmerk: string; tekst: string }[]
+  notities: { klant: string; kenmerk: string; tekst: string; thema: string }[]
+}
+
+export interface ProcesThemaStat {
+  thema: string
+  aantal: number
 }
 
 export interface ProcesStats {
@@ -16,6 +21,7 @@ export interface ProcesStats {
   gemAfwijking: number | null
   gemKlantcontact: number | null
   aspecten: ProcesAspectStat[]
+  procesThemas: ProcesThemaStat[]
 }
 
 export interface ThemaStat {
@@ -187,11 +193,26 @@ export function berekenStats(items: Aanbesteding[]) {
     const notities = items
       .map((a) => {
         const tekst = (a.evaluatie?.[asp.key] ?? "").trim()
-        return tekst ? { klant: a.klant || a.opdrachtgever || "Onbekend", kenmerk: a.kenmerk, tekst } : null
+        const thema = (a.evaluatie?.[asp.themaKey] ?? "").trim()
+        return tekst ? { klant: a.klant || a.opdrachtgever || "Onbekend", kenmerk: a.kenmerk, tekst, thema } : null
       })
       .filter((n): n is ProcesAspectStat["notities"][number] => n !== null)
     return { key: asp.key, label: asp.label, aantal: notities.length, notities }
   })
+
+  // Terugkerende procesthema's, over alle vier de aspecten heen.
+  const procesThemaMap = new Map<string, number>()
+  for (const a of items) {
+    if (!a.evaluatie) continue
+    for (const asp of PROCES_ASPECTEN) {
+      const thema = a.evaluatie[asp.themaKey]
+      if (!thema) continue
+      procesThemaMap.set(thema, (procesThemaMap.get(thema) ?? 0) + 1)
+    }
+  }
+  const procesThemas: ProcesThemaStat[] = Array.from(procesThemaMap.entries())
+    .map(([thema, aantal]) => ({ thema, aantal }))
+    .sort((a, b) => b.aantal - a.aantal)
 
   const proces: ProcesStats = {
     metEvaluatie: metEval.length,
@@ -201,6 +222,7 @@ export function berekenStats(items: Aanbesteding[]) {
     gemAfwijking,
     gemKlantcontact,
     aspecten,
+    procesThemas,
   }
 
   return {

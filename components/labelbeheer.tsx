@@ -20,7 +20,13 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDatum } from "@/lib/aanbesteding-utils"
 
-type Soort = "thema" | "leerpunt"
+type Soort = "thema" | "leerpunt" | "procesthema"
+
+const WOORD: Record<Soort, string> = {
+  thema: "thema",
+  leerpunt: "leerpunt",
+  procesthema: "procesthema",
+}
 
 interface LabelRow {
   id: string
@@ -68,19 +74,23 @@ export function Labelbeheer() {
         eyebrow="Instellingen"
         bold="Beheer de"
         accent="labels"
-        description="Thema's en leerpunten die het hele team gebruikt bij het coderen. Hernoemen of samenvoegen werkt automatisch door in alle bestaande aanbestedingen."
+        description="Thema's, leerpunten en procesthema's die het hele team gebruikt bij het coderen. Hernoemen of samenvoegen werkt automatisch door in alle bestaande aanbestedingen."
       />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Soort)}>
         <TabsList>
           <TabsTrigger value="thema">Thema&apos;s</TabsTrigger>
           <TabsTrigger value="leerpunt">Leerpunten</TabsTrigger>
+          <TabsTrigger value="procesthema">Procesthema&apos;s</TabsTrigger>
         </TabsList>
         <TabsContent value="thema" className="mt-6">
           <LabelPaneel soort="thema" labels={labels} loading={isLoading} onMutate={mutate} />
         </TabsContent>
         <TabsContent value="leerpunt" className="mt-6">
           <LabelPaneel soort="leerpunt" labels={labels} loading={isLoading} onMutate={mutate} />
+        </TabsContent>
+        <TabsContent value="procesthema" className="mt-6">
+          <LabelPaneel soort="procesthema" labels={labels} loading={isLoading} onMutate={mutate} />
         </TabsContent>
       </Tabs>
 
@@ -113,7 +123,7 @@ function LabelPaneel({
   const actief = relevante.filter((l) => l.actief)
   const inactief = relevante.filter((l) => !l.actief)
 
-  const woord = soort === "thema" ? "thema" : "leerpunt"
+  const woord = WOORD[soort]
 
   async function toevoegen() {
     const naam = nieuw.trim()

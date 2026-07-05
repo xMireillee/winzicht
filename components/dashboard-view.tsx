@@ -97,7 +97,7 @@ function ProcesAspectGroup({
 }: {
   label: string
   aantal: number
-  notities: { klant: string; kenmerk: string; tekst: string }[]
+  notities: { klant: string; kenmerk: string; tekst: string; thema: string }[]
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -118,7 +118,14 @@ function ProcesAspectGroup({
         <ul className="flex flex-col gap-3 border-t border-border px-4 py-3">
           {notities.map((n, i) => (
             <li key={i}>
-              <p className="font-mono text-xs text-muted-foreground">{[n.klant, n.kenmerk].filter(Boolean).join(" · ")}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-mono text-xs text-muted-foreground">{[n.klant, n.kenmerk].filter(Boolean).join(" · ")}</p>
+                {n.thema && (
+                  <span className="shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
+                    {n.thema}
+                  </span>
+                )}
+              </div>
               <FeedbackQuote tekst={n.tekst} />
             </li>
           ))}
@@ -693,23 +700,48 @@ export function DashboardView() {
           </p>
         </Card>
 
-        <Card className="flex flex-col p-5">
-          <h3 className="text-h3">Terugkerende leerpunten</h3>
-          {stats.leerpunten.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
-          ) : (
-            <ul className="mt-4 flex flex-col gap-2.5">
-              {stats.leerpunten.slice(0, 8).map((l) => (
-                <li key={l.leerpunt} className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-pretty">{l.leerpunt}</span>
-                  <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                    {l.aantal}×
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card className="flex flex-col p-5">
+            <h3 className="text-h3">Terugkerende leerpunten</h3>
+            {stats.leerpunten.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">Nog geen leerpunten uit interne evaluaties.</p>
+            ) : (
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {stats.leerpunten.slice(0, 8).map((l) => (
+                  <li key={l.leerpunt} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-pretty">{l.leerpunt}</span>
+                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
+                      {l.aantal}×
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col p-5">
+            <h3 className="text-h3">Terugkerende procesthema's</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Gecodeerd uit de toelichtingen bij planning, klantinput, uren en samenwerking.
+            </p>
+            {stats.proces.procesThemas.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Nog geen procesthema&apos;s gecodeerd — kies er een bij de toelichting in een interne evaluatie.
+              </p>
+            ) : (
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {stats.proces.procesThemas.slice(0, 8).map((t) => (
+                  <li key={t.thema} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-pretty">{t.thema}</span>
+                    <span className="tnum shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
+                      {t.aantal}×
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
 
         {stats.proces.aspecten.some((a) => a.aantal > 0) && (
           <Card className="flex flex-col gap-3 p-5">

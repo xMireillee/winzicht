@@ -41,7 +41,7 @@ export function ReviewForm({
   onOpnieuw?: () => void
 }) {
   const router = useRouter()
-  const { themas: themaOpties, leerpunten: leerpuntOpties } = useLabels()
+  const { themas: themaOpties, leerpunten: leerpuntOpties, procesThemas: procesThemaOpties } = useLabels()
   const [form, setForm] = useState<FormData>(initial)
   const { treffers: kenmerkTreffers } = useKenmerkCheck(form.kenmerk, id)
   const [saving, setSaving] = useState(false)
@@ -418,14 +418,22 @@ export function ReviewForm({
           </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {PROCES_ASPECTEN.map((asp) => (
-              <TextAreaField
-                key={asp.key}
-                label={asp.label}
-                value={evaluatie[asp.key]}
-                onChange={(v) => updateEvaluatie({ [asp.key]: v } as Partial<InterneEvaluatie>)}
-                placeholder={asp.hint}
-                rows={3}
-              />
+              <div key={asp.key} className="flex flex-col gap-2">
+                <TextAreaField
+                  label={asp.label}
+                  value={evaluatie[asp.key]}
+                  onChange={(v) => updateEvaluatie({ [asp.key]: v } as Partial<InterneEvaluatie>)}
+                  placeholder={asp.hint}
+                  rows={3}
+                />
+                <SelectField
+                  label="Procesthema"
+                  value={evaluatie[asp.themaKey] ?? ""}
+                  onChange={(v) => updateEvaluatie({ [asp.themaKey]: v } as Partial<InterneEvaluatie>)}
+                  options={metHuidige(procesThemaOpties, evaluatie[asp.themaKey] ?? "")}
+                  allowEmpty
+                />
+              </div>
             ))}
           </div>
         </Card>

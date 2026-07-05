@@ -1,11 +1,11 @@
 "use client"
 
 import useSWR from "swr"
-import { THEMAS, LEERPUNTEN } from "@/lib/constants"
+import { THEMAS, LEERPUNTEN, PROCES_THEMAS } from "@/lib/constants"
 
 interface LabelRow {
   id: string
-  soort: "thema" | "leerpunt"
+  soort: "thema" | "leerpunt" | "procesthema"
   naam: string
   actief: boolean
   aangemaakt_op: string
@@ -24,16 +24,22 @@ export function useLabels() {
 
   const rows = data?.labels
   if (!rows || rows.length === 0) {
-    return { themas: [...THEMAS] as string[], leerpunten: [...LEERPUNTEN] as string[] }
+    return {
+      themas: [...THEMAS] as string[],
+      leerpunten: [...LEERPUNTEN] as string[],
+      procesThemas: [...PROCES_THEMAS] as string[],
+    }
   }
 
   const actief = rows.filter((l) => l.actief)
   const themas = actief.filter((l) => l.soort === "thema").map((l) => l.naam)
   const leerpunten = actief.filter((l) => l.soort === "leerpunt").map((l) => l.naam)
+  const procesThemas = actief.filter((l) => l.soort === "procesthema").map((l) => l.naam)
 
   return {
     themas: themas.length > 0 ? themas : ([...THEMAS] as string[]),
     leerpunten: leerpunten.length > 0 ? leerpunten : ([...LEERPUNTEN] as string[]),
+    procesThemas: procesThemas.length > 0 ? procesThemas : ([...PROCES_THEMAS] as string[]),
   }
 }
 

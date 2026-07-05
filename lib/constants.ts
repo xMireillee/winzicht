@@ -60,13 +60,32 @@ export const LEERPUNTEN = [
   "Kennisborging / hergebruik teksten",
 ] as const
 
+// Procesthema's — coderen van de toelichting per procesaspect (net als thema1/thema2 bij
+// feedbackcriteria), zodat "waarom lopen we uit op uren" of "waar loopt de samenwerking
+// stroef" per sector/klant te analyseren wordt in plaats van los leestekst te blijven.
+export const PROCES_THEMAS = [
+  "Late start / vertraging bij opstart",
+  "Trage besluitvorming klant",
+  "Onvolledige of late input klant",
+  "Scope-uitbreiding tijdens traject",
+  "Onderschatting complexiteit",
+  "Urenraming te krap",
+  "Onduidelijke rolverdeling team",
+  "Beperkte beschikbaarheid contactpersoon",
+  "Verwachtingen onvoldoende gemanaged",
+  "Sterke, proactieve samenwerking",
+  "Goede voorbereiding / kennisoverdracht",
+  "Overig / niet te categoriseren",
+] as const
+
 // Procesaspecten voor de interne evaluatie (los van de inhoud). Elk aspect wordt
-// als vrije toelichting vastgelegd; de `key` verwijst naar het veld op InterneEvaluatie.
+// als vrije toelichting vastgelegd; de `key` verwijst naar het toelichtingveld en
+// `themaKey` naar het bijbehorende gecodeerde-thema-veld op InterneEvaluatie.
 export const PROCES_ASPECTEN = [
-  { key: "planningToelichting", label: "Planning & tijdigheid", hint: "Op tijd gestart, deadlines gehaald, geen last-minute stress?" },
-  { key: "klantinputToelichting", label: "Klant-/opdrachtgever-input", hint: "Kwaliteit en tijdigheid van de aangeleverde input." },
-  { key: "urenToelichting", label: "Urenbesteding vs. raming", hint: "Werkelijke inzet t.o.v. de begrote uren en waarom." },
-  { key: "samenwerkingToelichting", label: "Samenwerking met klant", hint: "Verloop van de samenwerking en afstemming." },
+  { key: "planningToelichting", themaKey: "planningThema", label: "Planning & tijdigheid", hint: "Op tijd gestart, deadlines gehaald, geen last-minute stress?" },
+  { key: "klantinputToelichting", themaKey: "klantinputThema", label: "Klant-/opdrachtgever-input", hint: "Kwaliteit en tijdigheid van de aangeleverde input." },
+  { key: "urenToelichting", themaKey: "urenThema", label: "Urenbesteding vs. raming", hint: "Werkelijke inzet t.o.v. de begrote uren en waarom." },
+  { key: "samenwerkingToelichting", themaKey: "samenwerkingThema", label: "Samenwerking met klant", hint: "Verloop van de samenwerking en afstemming." },
 ] as const
 
 export const UITSLAGEN = ["Gewonnen", "Verloren", "Ingetrokken", "Onbekend"] as const

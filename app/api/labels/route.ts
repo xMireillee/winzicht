@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import type { Aanbesteding } from "@/lib/types"
+import { PROCES_ASPECTEN } from "@/lib/constants"
+import type { Aanbesteding, InterneEvaluatie } from "@/lib/types"
 
-type Soort = "thema" | "leerpunt"
+type Soort = "thema" | "leerpunt" | "procesthema"
+const GELDIGE_SOORTEN: Soort[] = ["thema", "leerpunt", "procesthema"]
 
-// Herschrijf een labelnaam (thema of leerpunt) in alle opgeslagen aanbestedingen.
-// Retourneert het aantal bijgewerkte records. Bij `naar === null` blijven codes staan
-// (deactiveren verandert historische data niet).
+// Herschrijf een labelnaam (thema, leerpunt of procesthema) in alle opgeslagen
+// aanbestedingen. Retourneert het aantal bijgewerkte records. Bij `naar === null`
+// blijven codes staan (deactiveren verandert historische data niet).
 async function herschrijfLabel(
   supabase: Awaited<ReturnType<typeof createClient>>,
   soort: Soort,
@@ -46,6 +48,14 @@ async function herschrijfLabel(
       if (d.evaluatie.leerpunt2 === van) {
         d.evaluatie.leerpunt2 = naar
         veranderd = true
+      }
+    } else if (soort === "procesthema" && d.evaluatie) {
+      for (const asp of PROCES_ASPECTEN) {
+        const key = asp.themaKey as keyof InterneEvaluatie
+        if (d.evaluatie[key] === van) {
+          ;(d.evaluatie as Record<string, unknown>)[key] = naar
+          veranderd = true
+        }
       }
     }
 
@@ -107,7 +117,7 @@ export async function POST(request: NextRequest) {
 
   const soort = body.soort
   const naam = (body.naam ?? "").trim()
-  if ((soort !== "thema" && soort !== "leerpunt") || naam === "") {
+  if (!soort || !GELDIGE_SOORTEN.includes(soort) || naam === "") {
     return NextResponse.json({ error: "Soort en naam zijn verplicht." }, { status: 400 })
   }
 
