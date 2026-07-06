@@ -38,9 +38,10 @@ export async function POST(request: NextRequest) {
 
   // Bevestigingsmail verplicht: het account werkt pas nadat de eigenaar van de
   // mailbox op de link heeft geklikt. De redirect-URL wordt server-side bepaald,
-  // zodat de client geen willekeurige bestemming kan meesturen.
-  const redirectTo =
-    process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${request.nextUrl.origin}/auth/callback`
+  // zodat de client geen willekeurige bestemming kan meesturen. Gebruik de
+  // e-mailtemplate met token_hash naar /auth/confirm (zie supabase/schema.sql),
+  // dan werkt de link vanaf elk apparaat.
+  const redirectTo = `${request.nextUrl.origin}/auth/confirm`
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({

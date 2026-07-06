@@ -93,6 +93,25 @@ create table if not exists public.label_wijzigingen (
 -- ============================================================================
 
 -- ============================================================================
+-- AUTH-CONFIGURATIE (Supabase dashboard — geen SQL, maar hoort bij de setup)
+--
+-- Vereist voor een werkende bevestigingsmail bij het aanmaken van accounts:
+--
+-- 1. Authentication → URL Configuration:
+--      Site URL = https://winzicht.app
+--
+-- 2. Authentication → Emails → template "Confirm signup": vervang de link door
+--    onderstaande, zodat hij via /auth/confirm loopt (werkt vanaf elk apparaat,
+--    ook als de mail op een telefoon of andere browser wordt geopend):
+--
+--      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">
+--        Bevestig je account
+--      </a>
+--
+-- 3. Authentication → Sign In / Providers → Email: "Confirm email" AAN.
+-- ============================================================================
+
+-- ============================================================================
 -- Row Level Security
 --
 -- Alle reads/writes lopen via de API-routes, die zelf een sessie afdwingen
