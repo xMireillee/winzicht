@@ -14,6 +14,7 @@ import {
   Building2,
   Sparkles,
   ChartColumn,
+  KeyRound,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -97,6 +98,10 @@ export function CommandPalette() {
           <CommandItem onSelect={() => ga("/overzicht?onvolledig=1")}>
             <AlertTriangle className="size-4" />
             Onvolledige brieven bekijken
+          </CommandItem>
+          <CommandItem onSelect={() => ga("/instellingen/wachtwoord")}>
+            <KeyRound className="size-4" />
+            Wachtwoord wijzigen
           </CommandItem>
         </CommandGroup>
 

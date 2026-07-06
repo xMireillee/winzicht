@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, Users, Plus, LogOut, Menu, X, MessageSquareQuote, Settings, Search, Sparkles, ChartColumn } from "lucide-react"
+import { LayoutDashboard, FileText, Users, Plus, LogOut, Menu, X, MessageSquareQuote, Settings, Search, Sparkles, ChartColumn, KeyRound } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -127,10 +127,18 @@ function SidebarInhoud({ email, onNavigate }: { email: string; onNavigate?: () =
             <p className="truncate font-mono text-[11px] text-primary-foreground/50">{email}</p>
           </div>
         </div>
+        <Link
+          href="/instellingen/wachtwoord"
+          onClick={onNavigate}
+          className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-primary-foreground/70 transition-colors hover:bg-white/[0.06] hover:text-primary-foreground"
+        >
+          <KeyRound className="size-[18px] shrink-0" aria-hidden="true" />
+          Wachtwoord wijzigen
+        </Link>
         <button
           type="button"
           onClick={uitloggen}
-          className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-primary-foreground/70 transition-colors hover:bg-white/[0.06] hover:text-primary-foreground"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-primary-foreground/70 transition-colors hover:bg-white/[0.06] hover:text-primary-foreground"
         >
           <LogOut className="size-[18px] shrink-0" aria-hidden="true" />
           Uitloggen
