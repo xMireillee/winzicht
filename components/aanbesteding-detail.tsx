@@ -5,11 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AanbestedingOverzicht } from "@/components/aanbesteding-overzicht"
 import { EvaluatieForm } from "@/components/evaluatie-form"
 import { DebriefCard } from "@/components/debrief-card"
+import { LeidraadTab } from "@/components/leidraad-tab"
 import { ReviewForm } from "@/components/review-form"
-import type { Aanbesteding, Debrief } from "@/lib/types"
+import type { Aanbesteding, Debrief, Leidraad, LeidraadAnalyse } from "@/lib/types"
 
 type FormData = Omit<Aanbesteding, "id" | "aangemaaktOp">
-type Tab = "overzicht" | "evaluatie" | "bewerken"
+type Tab = "overzicht" | "leidraad" | "evaluatie" | "bewerken"
+const TABS: Tab[] = ["overzicht", "leidraad", "evaluatie", "bewerken"]
 
 /**
  * Detailpagina van één aanbesteding in drie tabbladen: lezen (overzicht +
@@ -21,16 +23,18 @@ export function AanbestedingDetail({
   id,
   initial,
   debrief,
+  leidraad,
+  leidraadAnalyse,
   initieleTab,
 }: {
   id: string
   initial: FormData
   debrief: Debrief | null
+  leidraad: Leidraad | null
+  leidraadAnalyse: LeidraadAnalyse | null
   initieleTab?: string
 }) {
-  const [tab, setTab] = useState<Tab>(
-    initieleTab === "evaluatie" || initieleTab === "bewerken" ? initieleTab : "overzicht",
-  )
+  const [tab, setTab] = useState<Tab>(TABS.includes(initieleTab as Tab) ? (initieleTab as Tab) : "overzicht")
   const [huidige, setHuidige] = useState<FormData>(initial)
   const [versie, setVersie] = useState(0)
 
@@ -44,6 +48,7 @@ export function AanbestedingDetail({
     <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
       <TabsList>
         <TabsTrigger value="overzicht">Overzicht</TabsTrigger>
+        <TabsTrigger value="leidraad">Leidraad</TabsTrigger>
         <TabsTrigger value="evaluatie">Interne evaluatie</TabsTrigger>
         <TabsTrigger value="bewerken">Gegevens bewerken</TabsTrigger>
       </TabsList>
@@ -53,6 +58,10 @@ export function AanbestedingDetail({
           <DebriefCard id={id} initieel={debrief} />
           <AanbestedingOverzicht aanbesteding={huidige} onNaarEvaluatie={() => setTab("evaluatie")} />
         </div>
+      </TabsContent>
+
+      <TabsContent value="leidraad" className="mt-6">
+        <LeidraadTab id={id} initieleLeidraad={leidraad} initieleAnalyse={leidraadAnalyse} />
       </TabsContent>
 
       <TabsContent value="evaluatie" className="mt-6">

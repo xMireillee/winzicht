@@ -19,13 +19,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id: _id, aangemaaktOp: _op, aangemaaktDoor: _door, ...data } = payload
 
-  // Het bewerkformulier stuurt geen debrief mee; neem een eerder gegenereerde
-  // debrief over zodat die niet verloren gaat bij het opslaan van wijzigingen.
-  if (!("debrief" in data)) {
+  // De formulieren sturen afgeleide velden (debrief, leidraad, leidraad-analyse)
+  // niet mee; neem bestaande waarden over zodat die niet verloren gaan bij het
+  // opslaan van wijzigingen.
+  const AFGELEIDE_VELDEN = ["debrief", "leidraad", "leidraadAnalyse"] as const
+  if (AFGELEIDE_VELDEN.some((veld) => !(veld in data))) {
     const { data: bestaand } = await supabase.from("aanbestedingen").select("data").eq("id", id).single()
-    const bestaandeDebrief = (bestaand?.data as Partial<Aanbesteding> | null)?.debrief
-    if (bestaandeDebrief) {
-      ;(data as Partial<Aanbesteding>).debrief = bestaandeDebrief
+    const bestaandeData = (bestaand?.data ?? {}) as Partial<Aanbesteding>
+    for (const veld of AFGELEIDE_VELDEN) {
+      if (!(veld in data) && bestaandeData[veld]) {
+        ;(data as unknown as Record<string, unknown>)[veld] = bestaandeData[veld]
+      }
     }
   }
 

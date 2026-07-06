@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AanbestedingDetail } from "@/components/aanbesteding-detail"
 import { legeEvaluatie, normaliseerExtractie, formatDatum } from "@/lib/aanbesteding-utils"
-import type { Aanbesteding, Debrief } from "@/lib/types"
+import type { Aanbesteding, Debrief, Leidraad, LeidraadAnalyse } from "@/lib/types"
 
 export default async function AanbestedingPage({
   params,
@@ -29,6 +29,16 @@ export default async function AanbestedingPage({
     raw.debrief && typeof raw.debrief === "object" && typeof (raw.debrief as Debrief).tekst === "string"
       ? (raw.debrief as Debrief)
       : null
+  const leidraad =
+    raw.leidraad && typeof raw.leidraad === "object" && Array.isArray((raw.leidraad as Leidraad).criteria)
+      ? (raw.leidraad as Leidraad)
+      : null
+  const leidraadAnalyse =
+    raw.leidraadAnalyse &&
+    typeof raw.leidraadAnalyse === "object" &&
+    typeof (raw.leidraadAnalyse as LeidraadAnalyse).tekst === "string"
+      ? (raw.leidraadAnalyse as LeidraadAnalyse)
+      : null
   const genormaliseerd = normaliseerExtractie(raw)
   const initial: Omit<Aanbesteding, "id" | "aangemaaktOp"> = {
     ...genormaliseerd,
@@ -53,7 +63,14 @@ export default async function AanbestedingPage({
         </h2>
         {subregel && <p className="mt-2 font-mono text-sm text-muted-foreground">{subregel}</p>}
       </div>
-      <AanbestedingDetail id={id} initial={initial} debrief={debrief} initieleTab={tab} />
+      <AanbestedingDetail
+        id={id}
+        initial={initial}
+        debrief={debrief}
+        leidraad={leidraad}
+        leidraadAnalyse={leidraadAnalyse}
+        initieleTab={tab}
+      />
     </div>
   )
 }

@@ -50,6 +50,35 @@ export interface Debrief {
   door: string // e-mail van wie de debrief genereerde
 }
 
+// AI-analyse van de behaalde scores t.o.v. de beoordelingssystematiek uit de leidraad.
+export type LeidraadAnalyse = Debrief
+
+// Eén niveau van een beoordelingsschaal uit de leidraad (bijv. score 8 = "goed" + omschrijving).
+export interface SchaalNiveau {
+  score: number | null
+  label: string
+  omschrijving: string
+}
+
+// Gunningscriterium zoals beschreven in de aanbestedingsleidraad.
+export interface LeidraadCriterium {
+  naam: string
+  weging: number | null
+  maxScore: number | null
+  omschrijving: string // wat er wordt gevraagd/beoordeeld
+  schaal: SchaalNiveau[] // letterlijke schaalomschrijvingen per scoreniveau
+}
+
+// Geëxtraheerde beoordelingssystematiek uit de aanbestedingsleidraad.
+export interface Leidraad {
+  bron: string // bestandsnaam
+  methodiek: string // bijv. gewogen gemiddelde, prijs-kwaliteitformule
+  knockOuts: string[]
+  criteria: LeidraadCriterium[]
+  geuploadOp: string // ISO-timestamp, server-side gezet
+  door: string
+}
+
 export interface Aanbesteding {
   id: string
   opdrachtgever: string
@@ -64,6 +93,8 @@ export interface Aanbesteding {
   percelen: Perceel[]
   evaluatie: InterneEvaluatie | null
   debrief?: Debrief | null
+  leidraad?: Leidraad | null
+  leidraadAnalyse?: LeidraadAnalyse | null
 }
 
 // Wat de extractie-API teruggeeft (zonder id/metadata).
