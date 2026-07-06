@@ -519,7 +519,13 @@ export function OverzichtLijst() {
                       )}
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 font-semibold">
-                          {a.opdrachtgever || "Onbekende opdrachtgever"}
+                          <Link
+                            href={`/overzicht/${a.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="underline-offset-2 hover:underline"
+                          >
+                            {a.opdrachtgever || "Onbekende opdrachtgever"}
+                          </Link>
                           {onvolledig && (
                             <AlertTriangle
                               className="size-3.5 shrink-0"
@@ -577,7 +583,7 @@ export function OverzichtLijst() {
                           </p>
                           <div className="flex gap-2">
                             <Button render={<Link href={`/overzicht/${a.id}`} />} variant="outline" size="sm">
-                              Bewerken
+                              Openen
                             </Button>
                             <Button
                               variant="outline"
