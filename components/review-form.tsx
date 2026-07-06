@@ -11,17 +11,10 @@ import { Separator } from "@/components/ui/separator"
 import { NumberField, SelectField, TextAreaField, TextField } from "@/components/form-fields"
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
 import { useKenmerkCheck } from "@/hooks/use-kenmerk-check"
-import { leegCriterium, leegPerceel, legeEvaluatie, formatDatum } from "@/lib/aanbesteding-utils"
+import { leegCriterium, leegPerceel, formatDatum } from "@/lib/aanbesteding-utils"
 import { useLabels, metHuidige } from "@/hooks/use-labels"
-import {
-  PROCEDURES,
-  PROCES_ASPECTEN,
-  SECTOREN,
-  SENTIMENTEN,
-  UITSLAGEN,
-  JA_NEE,
-} from "@/lib/constants"
-import type { Aanbesteding, Criterium, InterneEvaluatie, Perceel } from "@/lib/types"
+import { PROCEDURES, SECTOREN, SENTIMENTEN, UITSLAGEN } from "@/lib/constants"
+import type { Aanbesteding, Criterium, Perceel } from "@/lib/types"
 
 type FormData = Omit<Aanbesteding, "id" | "aangemaaktOp">
 
@@ -29,19 +22,17 @@ export function ReviewForm({
   initial,
   mode,
   id,
-  showEvaluatie = false,
   onOpgeslagen,
   onOpnieuw,
 }: {
   initial: FormData
   mode: "nieuw" | "bewerken"
   id?: string
-  showEvaluatie?: boolean
   onOpgeslagen?: () => void
   onOpnieuw?: () => void
 }) {
   const router = useRouter()
-  const { themas: themaOpties, leerpunten: leerpuntOpties, procesThemas: procesThemaOpties } = useLabels()
+  const { themas: themaOpties } = useLabels()
   const [form, setForm] = useState<FormData>(initial)
   const { treffers: kenmerkTreffers } = useKenmerkCheck(form.kenmerk, id)
   const [saving, setSaving] = useState(false)
@@ -140,11 +131,6 @@ export function ReviewForm({
     }))
   }
 
-  function updateEvaluatie(patch: Partial<InterneEvaluatie>) {
-    setDirty(true)
-    setForm((f) => ({ ...f, evaluatie: { ...legeEvaluatie(), ...(f.evaluatie ?? {}), ...patch } }))
-  }
-
   // Zachte waarschuwing: criterium met feedbacktekst maar zonder thema 1.
   const issues = useMemo(() => {
     const lijst: { id: string; label: string }[] = []
@@ -192,8 +178,6 @@ export function ReviewForm({
     }
     router.push("/overzicht")
   }
-
-  const evaluatie = { ...legeEvaluatie(), ...(form.evaluatie ?? {}) }
 
   if (opgeslagenKlant) {
     const aantalThemas = new Set(
@@ -384,60 +368,6 @@ export function ReviewForm({
           Perceel toevoegen
         </Button>
       </div>
-
-      {/* Interne evaluatie (alleen bij bewerken) */}
-      {showEvaluatie && (
-        <Card className="p-5">
-          <h3 className="text-h3">Interne evaluatie</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Beoordeling van hoe het traject <em>intern</em> is verlopen — gericht op het proces, niet op de inhoud van de
-            inschrijving. Hiermee wordt het dashboard rijker.
-          </p>
-
-          <p className="eyebrow mt-5">Kerncijfers proces</p>
-          <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <NumberField label="Klantcontact (1–5)" value={evaluatie.klantcontact} onChange={(v) => updateEvaluatie({ klantcontact: v })} />
-            <SelectField
-              label="Binnen begrote uren"
-              value={evaluatie.binnenUren}
-              onChange={(v) => updateEvaluatie({ binnenUren: v as InterneEvaluatie["binnenUren"] })}
-              options={JA_NEE}
-              allowEmpty
-            />
-            <NumberField label="Afwijking uren (%)" value={evaluatie.afwijking} onChange={(v) => updateEvaluatie({ afwijking: v })} />
-            <div className="hidden md:block" />
-            <SelectField label="Leerpunt 1" value={evaluatie.leerpunt1} onChange={(v) => updateEvaluatie({ leerpunt1: v })} options={metHuidige(leerpuntOpties, evaluatie.leerpunt1)} allowEmpty />
-            <SelectField label="Leerpunt 2" value={evaluatie.leerpunt2} onChange={(v) => updateEvaluatie({ leerpunt2: v })} options={metHuidige(leerpuntOpties, evaluatie.leerpunt2)} allowEmpty />
-          </div>
-
-          <Separator className="my-5" />
-
-          <p className="eyebrow">Procesevaluatie — toelichting per aspect</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Beschrijf per aspect hoe het proces verliep. Laat leeg wat niet van toepassing is.
-          </p>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {PROCES_ASPECTEN.map((asp) => (
-              <div key={asp.key} className="flex flex-col gap-2">
-                <TextAreaField
-                  label={asp.label}
-                  value={evaluatie[asp.key]}
-                  onChange={(v) => updateEvaluatie({ [asp.key]: v } as Partial<InterneEvaluatie>)}
-                  placeholder={asp.hint}
-                  rows={3}
-                />
-                <SelectField
-                  label="Procesthema"
-                  value={evaluatie[asp.themaKey] ?? ""}
-                  onChange={(v) => updateEvaluatie({ [asp.themaKey]: v } as Partial<InterneEvaluatie>)}
-                  options={metHuidige(procesThemaOpties, evaluatie[asp.themaKey] ?? "")}
-                  allowEmpty
-                />
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Sticky actiebalk: opslaan altijd zichtbaar + compacte validatiesamenvatting */}
       <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4">

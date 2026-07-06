@@ -443,7 +443,7 @@ export function berekenActies(items: Aanbesteding[]): DashboardActie[] {
       id: "evaluatie",
       type: "evaluatie",
       tekst: `${zonderEval.length} ${zonderEval.length === 1 ? "aanbesteding wacht" : "aanbestedingen wachten"} nog op een interne evaluatie: ${kenmerken}${zonderEval.length > 4 ? "…" : ""}`,
-      href: `/overzicht/${zonderEval[0].id}`,
+      href: `/overzicht/${zonderEval[0].id}?tab=evaluatie`,
     })
   }
 
