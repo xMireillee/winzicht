@@ -99,12 +99,14 @@ export default function LoginPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="password">Wachtwoord</Label>
+              {/* Geen minLength hier: bestaande accounts kunnen een ouder, korter
+                  wachtwoord hebben en moeten gewoon kunnen inloggen. De eis van
+                  10+ tekens geldt bij aanmaken en wijzigen. */}
               <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                minLength={MIN_WACHTWOORD_LENGTE}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
