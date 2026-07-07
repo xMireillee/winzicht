@@ -5,12 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Brand fonts: Archivo grotesque for all UI + headings, Fraunces for the editorial
-     italic accent in page titles, IBM Plex Mono for kenmerken/scores/eyebrows. */
-  --font-heading: var(--font-archivo), 'Archivo Fallback';
-  --font-sans: var(--font-archivo), 'Archivo Fallback';
-  --font-display: var(--font-fraunces), Georgia, serif;
-  --font-mono: var(--font-plex-mono), 'IBM Plex Mono Fallback';
+  /* Liquid-glass type system: IBM Plex Sans (UI + headings), IBM Plex Mono
+     (kenmerken/scores/eyebrows). One family, weights do the work. */
+  --font-heading: var(--font-plex-sans), 'IBM Plex Sans Fallback', system-ui;
+  --font-sans: var(--font-plex-sans), 'IBM Plex Sans Fallback', system-ui;
+  --font-display: var(--font-plex-sans), 'IBM Plex Sans Fallback', system-ui;
+  --font-mono: var(--font-plex-mono), 'IBM Plex Mono Fallback', monospace;
 
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -56,64 +56,64 @@
 }
 
 :root {
-  color-scheme: light;
-  --radius: 0.625rem; /* 10px — card corner rounding */
+  color-scheme: dark;
+  --radius: 0.8rem; /* lg ≈ 12.8px, xl ≈ 18px — glass card rounding */
 
-  /* ── Corus brand tokens (exact) ───────────────────────────
-     Retune the whole app from these lines. */
-  --ink: #201f3e;       /* Corus-indigo: tekst, UI-elementen op lichte vlakken */
-  --ink-foreground: #ffffff; /* tekst op ink-vlakken (sticky bar) */
-  --ink-deep: #110529;  /* logo-indigo: zijbalk-achtergrond */
-  --accent: #54ae93;    /* Corus-jadegroen: primaire CTA's, links, grafieklijnen */
-  --paper: #f6f6f9;     /* paginaachtergrond */
-  --won: #1e6b4f;       /* gewonnen */
-  --won-bg: #eaf4ef;
-  --lost: #b23a2c;      /* verloren */
-  --lost-bg: #faeeec;
-  --ai: #5b58a6;        /* uitsluitend voor AI-veldmarkeringen */
-  --ai-bg: #f4f4fb;
+  /* ── Winzicht "Liquid Glass" tokens ───────────────────────
+     Retune the whole app from these lines.
+     ink = primary text (light), never dark text on glass. */
+  --ink: #f2f5fb;
+  --ink-foreground: #0a1322; /* text on light/solid surfaces */
+  --ink-deep: rgba(10, 16, 32, 0.42); /* dark glass (sidebar, stamps) — pair with blur */
+  --accent: #2fd8c5; /* electric teal — "the system is being smart" + primary CTA */
+  --paper: #0a1322; /* deep navy base behind the atmosphere image */
+  --won: #3ebd80;
+  --won-bg: rgba(62, 189, 128, 0.22);
+  --lost: #e2604c;
+  --lost-bg: rgba(226, 96, 76, 0.22);
+  --ai: #2fd8c5; /* AI-veldmarkeringen = teal, glow */
+  --ai-bg: rgba(47, 216, 197, 0.12);
 
-  /* Surfaces */
+  /* Surfaces — frosted translucent glass, never opaque white */
   --background: var(--paper);
-  --card: #ffffff;
+  --card: rgba(255, 255, 255, 0.1);
   --card-foreground: var(--ink);
-  --popover: #ffffff;
+  --popover: rgba(18, 27, 48, 0.88); /* denser glass so menus stay readable */
   --popover-foreground: var(--ink);
 
-  /* Text: ink 100% / 65% / 45% */
+  /* Text: white 100% / 62% / 45% */
   --foreground: var(--ink);
-  --muted-foreground: #201f3ea6; /* --text-2: secundaire tekst */
-  --faint: #201f3e73;            /* --text-3: tertiaire tekst */
+  --muted-foreground: rgba(235, 241, 250, 0.62);
+  --faint: rgba(235, 241, 250, 0.45);
 
-  /* Primary = ink */
-  --primary: var(--ink);
-  --primary-foreground: #ffffff;
+  /* Primary action = teal accent (the one allowed accent use on chrome) */
+  --primary: var(--accent);
+  --primary-foreground: #06201c;
 
-  /* Accent = jadegroen. Green buttons use --ink-deep text (never white). */
-  --accent-foreground: var(--ink-deep);
-  --accent-strong: #0e7157; /* AA-safe accent for links/text on paper */
+  --accent-foreground: #06201c;
+  --accent-strong: #2fd8c5;
 
-  /* Neutral fills tinted from ink */
-  --secondary: #ecebf2;
+  /* Neutral fills: translucent white glass */
+  --secondary: rgba(255, 255, 255, 0.12);
   --secondary-foreground: var(--ink);
-  --muted: #edecf2;
+  --muted: rgba(255, 255, 255, 0.09);
 
   --destructive: var(--lost);
   --destructive-foreground: #ffffff;
 
-  /* Borders: ink @ ~12% over paper */
-  --border: #201f3e1f;
-  --input: #201f3e33;
+  /* Borders: white glass edges */
+  --border: rgba(255, 255, 255, 0.18);
+  --input: rgba(255, 255, 255, 0.26);
   --ring: var(--accent);
 
-  --won-foreground: #ffffff;
-  --lost-foreground: #ffffff;
+  --won-foreground: #eaf8f0;
+  --lost-foreground: #fdeeea;
 
-  --chart-1: var(--ink);
-  --chart-2: var(--accent);
-  --chart-3: var(--lost);
-  --chart-4: #6e6d82;
-  --chart-5: #c3c3d0;
+  --chart-1: #2fd8c5;
+  --chart-2: rgba(255, 255, 255, 0.78);
+  --chart-3: #e2604c;
+  --chart-4: rgba(255, 255, 255, 0.45);
+  --chart-5: rgba(255, 255, 255, 0.22);
 }
 
 @layer base {
@@ -158,23 +158,24 @@
     color: var(--faint);
   }
 
-  /* Editorial bold+italic accent — Corus "Ja, ik wil meer impact" character.
-     Use sparingly: one accent per page title. */
+  /* Editorial accent in page titles — teal, with a soft intelligence glow. */
   .display-accent {
-    @apply font-display italic font-normal;
-    color: var(--accent-strong);
+    @apply italic font-semibold;
+    color: var(--accent);
+    text-shadow: 0 0 24px rgba(47, 216, 197, 0.45);
   }
 
-  /* Result pill: straight, no border, no rotation — dot + word. */
+  /* Result pill: dot + word on translucent semantic fill. */
   .result-pill {
     @apply inline-flex items-center gap-1.5 font-sans font-semibold;
-    border-radius: 6px;
-    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 0.2rem 0.6rem;
     font-size: 0.8125rem;
     line-height: 1.1;
   }
   .result-pill[data-size='sm'] {
-    padding: 0.1rem 0.45rem;
+    padding: 0.1rem 0.5rem;
     font-size: 0.75rem;
   }
   .result-dot {
@@ -185,10 +186,11 @@
     flex-shrink: 0;
   }
 
-  /* AI-filled field indicator: tinted background + dot, cleared once edited */
+  /* AI-filled field indicator: teal-tinted glass + glow, cleared once edited */
   .ai-filled {
     background-color: var(--ai-bg);
-    border-color: color-mix(in srgb, var(--ai) 35%, var(--input));
+    border-color: color-mix(in srgb, var(--ai) 45%, var(--input));
+    box-shadow: 0 0 20px rgba(47, 216, 197, 0.18);
   }
 
   /* Visible focus everywhere */
@@ -197,6 +199,97 @@
     outline-offset: 2px;
     border-radius: 4px;
   }
+}
+
+/* ── Liquid glass surface treatments ────────────────────────
+   Skinned via data-slot so the shadcn components stay untouched. */
+@layer components {
+  /* Cards: frosted glass with a bright top edge to catch the light */
+  [data-slot='card'] {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.06) 100%
+    );
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 18px 46px rgba(2, 8, 20, 0.45);
+    transition:
+      box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-slot='card-footer'] {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  /* Inputs & triggers: lighter glass, teal focus handled by ring tokens */
+  [data-slot='input'],
+  [data-slot='textarea'],
+  [data-slot='select-trigger'],
+  [data-slot='input-group'] {
+    background: rgba(255, 255, 255, 0.07);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+
+  /* Floating layers (menus, dialogs, command palette): dense dark glass */
+  [data-slot='popover'],
+  [data-slot='popover-content'],
+  [data-slot='select-content'],
+  [data-slot='select-popup'],
+  [data-slot='dialog-content'],
+  [data-slot='dialog-popup'],
+  [data-slot='command'] {
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      0 18px 46px rgba(2, 8, 20, 0.55);
+  }
+
+  /* Tables: translucent row separators, no opaque stripes */
+  [data-slot='table'] tr {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Primary buttons glow — teal means the main action */
+  [data-slot='button'].bg-primary {
+    box-shadow: 0 0 24px rgba(47, 216, 197, 0.4);
+  }
+}
+
+/* ── Unlayered overrides (beat Tailwind utility classes) ──
+   The stock components use opaque bg-background in a few spots;
+   on liquid glass those must be translucent. */
+[data-slot='button'].bg-background {
+  background: rgba(255, 255, 255, 0.07);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+[data-slot='button'].bg-background:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+[data-slot='tabs-list'][data-variant='default'] {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+[data-slot='tabs-trigger'][data-active] {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+/* Sonner toasts: dense dark glass */
+.cn-toast {
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 18px 46px rgba(2, 8, 20, 0.55) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

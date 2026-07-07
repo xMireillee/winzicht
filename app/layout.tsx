@@ -1,18 +1,14 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Archivo, Fraunces, IBM_Plex_Mono } from 'next/font/google'
+import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
-const archivo = Archivo({
-  variable: '--font-archivo',
+const plexSans = IBM_Plex_Sans({
+  variable: '--font-plex-sans',
   subsets: ['latin'],
-})
-const fraunces = Fraunces({
-  variable: '--font-fraunces',
-  subsets: ['latin'],
-  style: ['italic', 'normal'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
 })
 const plexMono = IBM_Plex_Mono({
   variable: '--font-plex-mono',
@@ -28,8 +24,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#201F3E',
+  colorScheme: 'dark',
+  themeColor: '#0A1322',
 }
 
 export default function RootLayout({
@@ -38,8 +34,25 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="nl" className={`${archivo.variable} ${fraunces.variable} ${plexMono.variable} bg-background`}>
+    <html lang="nl" className={`${plexSans.variable} ${plexMono.variable} bg-background`}>
       <body className="font-sans antialiased">
+        {/* Atmospheric backdrop: soft out-of-focus image, dimmed so glass
+            panels and white text stay readable. Fixed behind everything. */}
+        <div aria-hidden="true" className="fixed inset-0 -z-10 bg-[#0A1322]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/chorus.png"
+            alt=""
+            className="h-full w-full object-cover"
+            draggable={false}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(rgba(6,9,22,0.28), rgba(6,9,22,0.45))',
+            }}
+          />
+        </div>
         {children}
         <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
