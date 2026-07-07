@@ -68,14 +68,13 @@ export default function LoginPage() {
     )
   }
 
-  // Login drijft als glazen paneel op de atmosfeer-achtergrond uit RootLayout.
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-primary px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <p className="eyebrow">Corus Advies · Interne tool</p>
-          <h1 className="mt-2 font-heading text-2xl font-bold text-balance">
-            Gunningsbrief-<span className="display-accent">analyse</span>
+          <p className="eyebrow text-primary-foreground/70">Corus Advies · Interne tool</p>
+          <h1 className="mt-2 font-heading text-2xl font-bold text-primary-foreground text-balance">
+            Gunningsbrief-analyse
           </h1>
         </div>
 
