@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 8000,
+        max_tokens: 16000,
         messages: [
           {
             role: "user",
@@ -112,16 +112,46 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!res.ok) {
       const detail = await res.text()
       console.log("[v0] Leidraad: Anthropic-fout:", res.status, detail)
-      return NextResponse.json({ error: FOUTMELDING }, { status: 502 })
+      const low = detail.toLowerCase()
+      let melding = FOUTMELDING
+      if (res.status === 429 || low.includes("rate")) {
+        melding = "De AI-service is even te druk (limiet bereikt). Wacht een minuut en probeer het opnieuw."
+      } else if (res.status === 413 || low.includes("page") || low.includes("too large") || low.includes("exceed")) {
+        melding =
+          "De PDF is te groot of heeft te veel pagina's voor de analyse. Upload alleen het hoofdstuk met de beoordelingssystematiek (de gunningscriteria en de scoretabel)."
+      }
+      return NextResponse.json({ error: melding }, { status: 502 })
     }
 
     const json = await res.json()
+    if (json?.stop_reason === "max_tokens") {
+      console.log("[v0] Leidraad: max_tokens bereikt")
+      return NextResponse.json(
+        {
+          error:
+            "De leidraad is te lang om in één keer te verwerken. Upload alleen het hoofdstuk met de gunningscriteria en de scoretabel.",
+        },
+        { status: 422 },
+      )
+    }
     const modelText: string =
       Array.isArray(json?.content) && json.content.length > 0
         ? json.content.map((c: { text?: string }) => c.text ?? "").join("")
         : ""
 
-    const genormaliseerd = normaliseerLeidraad(parseModelJson(modelText))
+    let genormaliseerd
+    try {
+      genormaliseerd = normaliseerLeidraad(parseModelJson(modelText))
+    } catch (parseErr) {
+      console.log("[v0] Leidraad: JSON-parse mislukt:", parseErr instanceof Error ? parseErr.message : String(parseErr))
+      return NextResponse.json(
+        {
+          error:
+            "De analyse leverde geen bruikbaar resultaat op. Probeer het opnieuw, of upload alleen het hoofdstuk met de gunningscriteria.",
+        },
+        { status: 502 },
+      )
+    }
     if (genormaliseerd.criteria.length === 0) {
       return NextResponse.json(
         { error: "Er zijn geen gunningscriteria in dit document gevonden. Is dit de juiste leidraad?" },

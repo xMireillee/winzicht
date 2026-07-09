@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { Leidraad, LeidraadAnalyse } from "@/lib/types"
 
-const MAX_BYTES = 20 * 1024 * 1024
+// De PDF gaat als base64 in de JSON-body naar de server. Het hostingplatform
+// weigert verzoeken groter dan ~4,5 MB, en base64 is ~1,37× het bestand — dus een
+// PDF boven ~3 MB komt niet aan. We waarschuwen daarom vooraf i.p.v. een vage fout.
+const MAX_BYTES = 3 * 1024 * 1024
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -53,7 +56,9 @@ export function LeidraadTab({
       return
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Het bestand is te groot. Maximaal 20 MB.")
+      toast.error(
+        "De PDF is te groot (max ± 3 MB). Upload alleen het hoofdstuk met de beoordelingssystematiek — de gunningscriteria en de scoretabel.",
+      )
       return
     }
     setUploadBezig(true)
@@ -66,7 +71,10 @@ export function LeidraadTab({
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(data.error ?? "De leidraad kon niet worden geanalyseerd.")
+        toast.error(
+          data.error ??
+            `De leidraad kon niet worden geanalyseerd (foutcode ${res.status}). Bij een grote PDF: upload alleen het relevante hoofdstuk.`,
+        )
         return
       }
       setLeidraad(data.leidraad)
@@ -104,7 +112,7 @@ export function LeidraadTab({
             <p className="mt-1 text-sm text-muted-foreground">
               {leidraad
                 ? `Geëxtraheerd uit ${leidraad.bron || "PDF"} · ${formatTijdstip(leidraad.geuploadOp)}`
-                : "Upload de leidraad (PDF) om de beoordelingssystematiek te extraheren: criteria, wegingen, schaalomschrijvingen en knock-outs."}
+                : "Upload de leidraad (PDF, max ± 3 MB) om de beoordelingssystematiek te extraheren: criteria, wegingen, schaalomschrijvingen en knock-outs. Bij een groot document: upload alleen het hoofdstuk met de gunningscriteria en de scoretabel."}
             </p>
           </div>
           <Button variant={leidraad ? "outline" : "default"} onClick={() => fileInput.current?.click()} disabled={uploadBezig}>
