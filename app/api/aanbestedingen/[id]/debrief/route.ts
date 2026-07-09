@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { PROCES_ASPECTEN } from "@/lib/constants"
+import { EVALUATIE_VRAGEN } from "@/lib/constants"
 import type { Aanbesteding, Debrief } from "@/lib/types"
 
 export const maxDuration = 60
@@ -53,15 +53,11 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     percelen: d.percelen,
     interneEvaluatie: d.evaluatie
       ? {
-          klantcontact: d.evaluatie.klantcontact,
-          binnenUren: d.evaluatie.binnenUren,
           afwijkingUrenPct: d.evaluatie.afwijking,
-          leerpunten: [d.evaluatie.leerpunt1, d.evaluatie.leerpunt2].filter(Boolean),
-          procesaspecten: PROCES_ASPECTEN.map((asp) => ({
-            aspect: asp.label,
-            thema: d.evaluatie?.[asp.themaKey] || null,
-            toelichting: d.evaluatie?.[asp.key] || null,
-          })).filter((a) => a.thema || a.toelichting),
+          reflectie: EVALUATIE_VRAGEN.map((vraag) => ({
+            vraag: vraag.label,
+            antwoord: d.evaluatie?.[vraag.key] || null,
+          })).filter((r) => r.antwoord),
         }
       : null,
   }

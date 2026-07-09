@@ -45,47 +45,34 @@ export const THEMAS = [
   "Overig / niet te coderen",
 ] as const
 
-export const LEERPUNTEN = [
-  "Eerder starten / planning intern",
-  "Betere uitvraag bij klant",
-  "Scherpere win-thema's bepalen",
-  "Meer bewijsvoering / cases opnemen",
-  "Concreter en SMART schrijven",
-  "Review-proces verbeteren",
-  "Prijsstrategie herzien",
-  "Kennis van opdrachtgever verdiepen",
-  "Rolverdeling team verduidelijken",
-  "Verwachtingsmanagement klant",
-  "Urenraming realistischer",
-  "Kennisborging / hergebruik teksten",
-] as const
-
-// Procesthema's — coderen van de toelichting per procesaspect (net als thema1/thema2 bij
-// feedbackcriteria), zodat "waarom lopen we uit op uren" of "waar loopt de samenwerking
-// stroef" per sector/klant te analyseren wordt in plaats van los leestekst te blijven.
-export const PROCES_THEMAS = [
-  "Late start / vertraging bij opstart",
-  "Trage besluitvorming klant",
-  "Onvolledige of late input klant",
-  "Scope-uitbreiding tijdens traject",
-  "Onderschatting complexiteit",
-  "Urenraming te krap",
-  "Onduidelijke rolverdeling team",
-  "Beperkte beschikbaarheid contactpersoon",
-  "Verwachtingen onvoldoende gemanaged",
-  "Sterke, proactieve samenwerking",
-  "Goede voorbereiding / kennisoverdracht",
-  "Overig / niet te categoriseren",
-] as const
-
-// Procesaspecten voor de interne evaluatie (los van de inhoud). Elk aspect wordt
-// als vrije toelichting vastgelegd; de `key` verwijst naar het toelichtingveld en
-// `themaKey` naar het bijbehorende gecodeerde-thema-veld op InterneEvaluatie.
-export const PROCES_ASPECTEN = [
-  { key: "planningToelichting", themaKey: "planningThema", label: "Planning & tijdigheid", hint: "Op tijd gestart, deadlines gehaald, geen last-minute stress?" },
-  { key: "klantinputToelichting", themaKey: "klantinputThema", label: "Klant-/opdrachtgever-input", hint: "Kwaliteit en tijdigheid van de aangeleverde input." },
-  { key: "urenToelichting", themaKey: "urenThema", label: "Urenbesteding vs. raming", hint: "Werkelijke inzet t.o.v. de begrote uren en waarom." },
-  { key: "samenwerkingToelichting", themaKey: "samenwerkingThema", label: "Samenwerking met klant", hint: "Verloop van de samenwerking en afstemming." },
+// Open reflectievragen voor de interne evaluatie. Elke `key` komt overeen met een
+// tekstveld op InterneEvaluatie; `label` is de vraag en `hint` de toelichting eronder.
+export const EVALUATIE_VRAGEN = [
+  {
+    key: "terugblik",
+    label: "Hoe kijk je terug op dit project?",
+    hint: "Wat ging goed en wat zou je een volgende keer anders doen?",
+  },
+  {
+    key: "contact",
+    label: "Hoe verliep het contact met de klant?",
+    hint: "Denk aan duidelijkheid van de vraag, samenwerking en verwachtingen over en weer.",
+  },
+  {
+    key: "planningUren",
+    label: "Hoe ging het project qua planning en uren?",
+    hint: "Bleven we binnen de begrote uren? Zo niet, waar zat dat in?",
+  },
+  {
+    key: "leerpunten",
+    label: "Wat zijn de belangrijkste leerpunten uit dit project?",
+    hint: "Dingen die we als team of organisatie mee kunnen nemen naar een volgende opdracht.",
+  },
+  {
+    key: "hoogtepunt",
+    label: "Waar werd je blij van in dit project?",
+    hint: "Bijvoorbeeld een moment, samenwerking, resultaat of reactie van de klant.",
+  },
 ] as const
 
 export const UITSLAGEN = ["Gewonnen", "Verloren", "Ingetrokken", "Onbekend"] as const

@@ -1,27 +1,18 @@
-import { PROCES_ASPECTEN } from "./constants"
+import { EVALUATIE_VRAGEN } from "./constants"
 import type { Aanbesteding, Perceel } from "./types"
 
-export interface ProcesAspectStat {
+// Antwoorden op één reflectievraag, verzameld over alle aanbestedingen.
+export interface ReflectieStat {
   key: string
-  label: string
+  vraag: string
   aantal: number
-  notities: { klant: string; kenmerk: string; tekst: string; thema: string }[]
-}
-
-export interface ProcesThemaStat {
-  thema: string
-  aantal: number
+  antwoorden: { klant: string; kenmerk: string; tekst: string }[]
 }
 
 export interface ProcesStats {
   metEvaluatie: number
-  binnenUrenPct: number | null
-  binnenUrenJa: number
-  binnenUrenNee: number
   gemAfwijking: number | null
-  gemKlantcontact: number | null
-  aspecten: ProcesAspectStat[]
-  procesThemas: ProcesThemaStat[]
+  reflecties: ReflectieStat[]
 }
 
 export interface ThemaStat {
@@ -86,11 +77,6 @@ export interface SectorStat {
   gewonnen: number
   verloren: number
   winrate: number | null
-}
-
-export interface LeerpuntStat {
-  leerpunt: string
-  aantal: number
 }
 
 export function berekenStats(items: Aanbesteding[]) {
@@ -158,71 +144,28 @@ export function berekenStats(items: Aanbesteding[]) {
     .filter((s) => s.gewonnen + s.verloren > 0)
     .sort((a, b) => (b.winrate ?? -1) - (a.winrate ?? -1))
 
-  // Terugkerende leerpunten uit interne evaluaties.
-  const leerMap = new Map<string, number>()
-  for (const a of items) {
-    if (!a.evaluatie) continue
-    for (const lp of [a.evaluatie.leerpunt1, a.evaluatie.leerpunt2]) {
-      if (!lp) continue
-      leerMap.set(lp, (leerMap.get(lp) ?? 0) + 1)
-    }
-  }
-  const leerpunten: LeerpuntStat[] = Array.from(leerMap.entries())
-    .map(([leerpunt, aantal]) => ({ leerpunt, aantal }))
-    .sort((a, b) => b.aantal - a.aantal)
-
-  // Procesevaluatie: kwantitatieve kerncijfers + kwalitatieve toelichtingen per aspect.
+  // Interne evaluatie: gemiddelde uren-afwijking + de open reflectieantwoorden.
   const metEval = items.filter((a) => a.evaluatie)
-  const binnenUrenJa = metEval.filter((a) => a.evaluatie?.binnenUren === "Ja").length
-  const binnenUrenNee = metEval.filter((a) => a.evaluatie?.binnenUren === "Nee").length
-  const urenBekend = binnenUrenJa + binnenUrenNee
-  const binnenUrenPct = urenBekend > 0 ? binnenUrenJa / urenBekend : null
 
   const afwijkingen = metEval
     .map((a) => a.evaluatie?.afwijking)
     .filter((n): n is number => typeof n === "number")
   const gemAfwijking = afwijkingen.length > 0 ? afwijkingen.reduce((a, b) => a + b, 0) / afwijkingen.length : null
 
-  const klantcontacten = metEval
-    .map((a) => a.evaluatie?.klantcontact)
-    .filter((n): n is number => typeof n === "number")
-  const gemKlantcontact =
-    klantcontacten.length > 0 ? klantcontacten.reduce((a, b) => a + b, 0) / klantcontacten.length : null
-
-  const aspecten: ProcesAspectStat[] = PROCES_ASPECTEN.map((asp) => {
-    const notities = items
+  const reflecties: ReflectieStat[] = EVALUATIE_VRAGEN.map((vraag) => {
+    const antwoorden = items
       .map((a) => {
-        const tekst = (a.evaluatie?.[asp.key] ?? "").trim()
-        const thema = (a.evaluatie?.[asp.themaKey] ?? "").trim()
-        return tekst ? { klant: a.klant || a.opdrachtgever || "Onbekend", kenmerk: a.kenmerk, tekst, thema } : null
+        const tekst = (a.evaluatie?.[vraag.key] ?? "").trim()
+        return tekst ? { klant: a.klant || a.opdrachtgever || "Onbekend", kenmerk: a.kenmerk, tekst } : null
       })
-      .filter((n): n is ProcesAspectStat["notities"][number] => n !== null)
-    return { key: asp.key, label: asp.label, aantal: notities.length, notities }
+      .filter((n): n is ReflectieStat["antwoorden"][number] => n !== null)
+    return { key: vraag.key, vraag: vraag.label, aantal: antwoorden.length, antwoorden }
   })
-
-  // Terugkerende procesthema's, over alle vier de aspecten heen.
-  const procesThemaMap = new Map<string, number>()
-  for (const a of items) {
-    if (!a.evaluatie) continue
-    for (const asp of PROCES_ASPECTEN) {
-      const thema = a.evaluatie[asp.themaKey]
-      if (!thema) continue
-      procesThemaMap.set(thema, (procesThemaMap.get(thema) ?? 0) + 1)
-    }
-  }
-  const procesThemas: ProcesThemaStat[] = Array.from(procesThemaMap.entries())
-    .map(([thema, aantal]) => ({ thema, aantal }))
-    .sort((a, b) => b.aantal - a.aantal)
 
   const proces: ProcesStats = {
     metEvaluatie: metEval.length,
-    binnenUrenPct,
-    binnenUrenJa,
-    binnenUrenNee,
     gemAfwijking,
-    gemKlantcontact,
-    aspecten,
-    procesThemas,
+    reflecties,
   }
 
   return {
@@ -234,7 +177,6 @@ export function berekenStats(items: Aanbesteding[]) {
     gemVerschil,
     themas,
     sectoren,
-    leerpunten,
     proces,
   }
 }
@@ -245,14 +187,12 @@ export interface SectorAnalyseStat {
   verloren: number
   winrate: number | null
   metEvaluatie: number
-  binnenUrenPct: number | null
   gemAfwijking: number | null
-  gemKlantcontact: number | null
 }
 
 /**
- * Winrate + procescijfers per sector, zodat zichtbaar wordt waar niet alleen vaker
- * wordt verloren maar ook waar de urenbesteding of samenwerking structureel afwijkt.
+ * Winrate + gemiddelde uren-afwijking per sector, zodat zichtbaar wordt waar niet
+ * alleen vaker wordt verloren maar ook waar de urenbesteding structureel afwijkt.
  */
 export function berekenSectorAnalyse(items: Aanbesteding[]): SectorAnalyseStat[] {
   const map = new Map<string, Aanbesteding[]>()
@@ -270,21 +210,10 @@ export function berekenSectorAnalyse(items: Aanbesteding[]): SectorAnalyseStat[]
     const winrate = gewonnen + verloren > 0 ? gewonnen / (gewonnen + verloren) : null
 
     const metEval = groep.filter((a) => a.evaluatie)
-    const binnenUrenJa = metEval.filter((a) => a.evaluatie?.binnenUren === "Ja").length
-    const binnenUrenNee = metEval.filter((a) => a.evaluatie?.binnenUren === "Nee").length
-    const urenBekend = binnenUrenJa + binnenUrenNee
-    const binnenUrenPct = urenBekend > 0 ? binnenUrenJa / urenBekend : null
-
     const afwijkingen = metEval
       .map((a) => a.evaluatie?.afwijking)
       .filter((n): n is number => typeof n === "number")
     const gemAfwijking = afwijkingen.length > 0 ? afwijkingen.reduce((a, b) => a + b, 0) / afwijkingen.length : null
-
-    const klantcontacten = metEval
-      .map((a) => a.evaluatie?.klantcontact)
-      .filter((n): n is number => typeof n === "number")
-    const gemKlantcontact =
-      klantcontacten.length > 0 ? klantcontacten.reduce((a, b) => a + b, 0) / klantcontacten.length : null
 
     return {
       sector,
@@ -292,9 +221,7 @@ export function berekenSectorAnalyse(items: Aanbesteding[]): SectorAnalyseStat[]
       verloren,
       winrate,
       metEvaluatie: metEval.length,
-      binnenUrenPct,
       gemAfwijking,
-      gemKlantcontact,
     }
   })
 

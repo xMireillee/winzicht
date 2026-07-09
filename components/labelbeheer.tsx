@@ -8,7 +8,6 @@ import { PageHeading } from "@/components/page-heading"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -20,12 +19,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDatum } from "@/lib/aanbesteding-utils"
 
-type Soort = "thema" | "leerpunt" | "procesthema"
+type Soort = "thema"
 
 const WOORD: Record<Soort, string> = {
   thema: "thema",
-  leerpunt: "leerpunt",
-  procesthema: "procesthema",
 }
 
 interface LabelRow {
@@ -63,7 +60,6 @@ export function Labelbeheer() {
     fetcher,
     { revalidateOnFocus: false },
   )
-  const [tab, setTab] = useState<Soort>("thema")
 
   const labels = data?.labels ?? []
   const wijzigingen = data?.wijzigingen ?? []
@@ -73,26 +69,11 @@ export function Labelbeheer() {
       <PageHeading
         eyebrow="Instellingen"
         bold="Beheer de"
-        accent="labels"
-        description="Thema's, leerpunten en procesthema's die het hele team gebruikt bij het coderen. Hernoemen of samenvoegen werkt automatisch door in alle bestaande aanbestedingen."
+        accent="thema's"
+        description="De feedbackthema's die het team gebruikt bij het coderen van gunningsbrieven. Hernoemen of samenvoegen werkt automatisch door in alle bestaande aanbestedingen."
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Soort)}>
-        <TabsList>
-          <TabsTrigger value="thema">Thema&apos;s</TabsTrigger>
-          <TabsTrigger value="leerpunt">Leerpunten</TabsTrigger>
-          <TabsTrigger value="procesthema">Procesthema&apos;s</TabsTrigger>
-        </TabsList>
-        <TabsContent value="thema" className="mt-6">
-          <LabelPaneel soort="thema" labels={labels} loading={isLoading} onMutate={mutate} />
-        </TabsContent>
-        <TabsContent value="leerpunt" className="mt-6">
-          <LabelPaneel soort="leerpunt" labels={labels} loading={isLoading} onMutate={mutate} />
-        </TabsContent>
-        <TabsContent value="procesthema" className="mt-6">
-          <LabelPaneel soort="procesthema" labels={labels} loading={isLoading} onMutate={mutate} />
-        </TabsContent>
-      </Tabs>
+      <LabelPaneel soort="thema" labels={labels} loading={isLoading} onMutate={mutate} />
 
       <WijzigingenLog wijzigingen={wijzigingen} />
     </div>

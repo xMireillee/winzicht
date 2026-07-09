@@ -28,19 +28,12 @@ export function leegPerceel(naam = "Geheel"): Perceel {
 
 export function legeEvaluatie(): InterneEvaluatie {
   return {
-    klantcontact: null,
-    binnenUren: "",
     afwijking: null,
-    leerpunt1: "",
-    leerpunt2: "",
-    planningToelichting: "",
-    klantinputToelichting: "",
-    urenToelichting: "",
-    samenwerkingToelichting: "",
-    planningThema: "",
-    klantinputThema: "",
-    urenThema: "",
-    samenwerkingThema: "",
+    terugblik: "",
+    contact: "",
+    planningUren: "",
+    leerpunten: "",
+    hoogtepunt: "",
   }
 }
 

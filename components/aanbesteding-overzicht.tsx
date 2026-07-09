@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { UitslagStamp } from "@/components/uitslag-stamp"
 import { FeedbackQuote } from "@/components/feedback-quote"
 import { formatDatum } from "@/lib/aanbesteding-utils"
-import { PROCES_ASPECTEN } from "@/lib/constants"
+import { EVALUATIE_VRAGEN } from "@/lib/constants"
 import type { Aanbesteding, InterneEvaluatie, Sentiment } from "@/lib/types"
 
 type FormData = Omit<Aanbesteding, "id" | "aangemaaktOp">
@@ -37,14 +37,7 @@ function SentimentBadge({ sentiment }: { sentiment: Sentiment }) {
 
 function heeftInhoud(e: InterneEvaluatie | null): boolean {
   if (!e) return false
-  return (
-    e.klantcontact != null ||
-    e.binnenUren !== "" ||
-    e.afwijking != null ||
-    !!e.leerpunt1 ||
-    !!e.leerpunt2 ||
-    PROCES_ASPECTEN.some((asp) => (e[asp.key] ?? "").trim() !== "" || (e[asp.themaKey] ?? "") !== "")
-  )
+  return e.afwijking != null || EVALUATIE_VRAGEN.some((v) => (e[v.key] ?? "").trim() !== "")
 }
 
 /** Leesweergave van één aanbesteding: kerngegevens, percelen, criteria en feedback. */

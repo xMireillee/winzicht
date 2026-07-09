@@ -44,8 +44,10 @@ create table if not exists public.klanten (
 
 -- ----------------------------------------------------------------------------
 -- labels
--- soort: 'thema' (feedbackcodering), 'leerpunt' (interne evaluatie),
--- 'procesthema' (codering van procesevaluatie-toelichtingen).
+-- soort: sinds juli 2026 alleen nog 'thema' (feedbackcodering van criteria in
+-- gunningsbrieven). De soorten 'leerpunt' en 'procesthema' zijn vervallen met de
+-- nieuwe, open interne evaluatie; de CHECK laat ze nog toe zodat eventuele oude
+-- rijen geldig blijven, maar de app maakt en toont ze niet meer.
 -- De API rekent op unieke (soort, naam)-combinaties: bij een duplicaat
 -- verwacht hij foutcode 23505.
 -- ----------------------------------------------------------------------------
@@ -74,22 +76,16 @@ create table if not exists public.label_wijzigingen (
 );
 
 -- ============================================================================
--- MIGRATIE voor bestaande databases: procesthema toestaan
+-- OPRUIMEN (optioneel): oude leerpunt- en procesthema-labels
 --
--- De app ondersteunt sinds juli 2026 de labelsoort 'procesthema'. Als de
--- bestaande labels-tabel een CHECK-constraint heeft die alleen 'thema' en
--- 'leerpunt' toestaat, faalt het toevoegen van een procesthema met een
--- database-fout. Voer dan onderstaande statements uit in de Supabase
--- SQL-editor (constraintnaam kan afwijken; check eerst met de query hieronder).
+-- Sinds de open interne evaluatie (juli 2026) gebruikt de app alleen nog
+-- 'thema'-labels. Bestaande 'leerpunt'- en 'procesthema'-rijen doen geen kwaad
+-- (de app negeert ze), maar wie ze wil opruimen kan ze deactiveren of verwijderen:
 --
---   select conname, pg_get_constraintdef(oid)
---   from pg_constraint
---   where conrelid = 'public.labels'::regclass and contype = 'c';
+--   delete from public.labels where soort in ('leerpunt', 'procesthema');
 --
---   alter table public.labels drop constraint if exists labels_soort_check;
---   alter table public.labels
---     add constraint labels_soort_check
---     check (soort in ('thema', 'leerpunt', 'procesthema'));
+-- Een CHECK-constraint aanpassen is niet nodig; laat 'thema','leerpunt',
+-- 'procesthema' gewoon toegestaan zodat historische rijen geldig blijven.
 -- ============================================================================
 
 -- ============================================================================

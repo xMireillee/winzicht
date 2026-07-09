@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { PROCES_ASPECTEN } from "@/lib/constants"
 import type { Aanbesteding } from "@/lib/types"
 
-type Soort = "thema" | "leerpunt" | "procesthema"
-const GELDIGE_SOORTEN: Soort[] = ["thema", "leerpunt", "procesthema"]
+// Alleen feedbackthema's zijn nog beheerbaar (gebruikt bij het coderen van criteria
+// in gunningsbrieven). Leerpunten en procesthema's zijn vervallen.
+type Soort = "thema"
+const GELDIGE_SOORTEN: Soort[] = ["thema"]
 
-// Herschrijf een labelnaam (thema, leerpunt of procesthema) in alle opgeslagen
-// aanbestedingen. Retourneert het aantal bijgewerkte records. Bij `naar === null`
-// blijven codes staan (deactiveren verandert historische data niet).
+// Herschrijf een feedbackthema in alle opgeslagen aanbestedingen (thema1/thema2 per
+// criterium). Retourneert het aantal bijgewerkte records.
 async function herschrijfLabel(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  soort: Soort,
+  _soort: Soort,
   van: string,
   naar: string,
 ): Promise<number> {
@@ -27,32 +27,14 @@ async function herschrijfLabel(
     const d = row.data as Omit<Aanbesteding, "id" | "aangemaaktOp" | "aangemaaktDoor">
     let veranderd = false
 
-    if (soort === "thema") {
-      for (const perceel of d.percelen ?? []) {
-        for (const crit of perceel.criteria ?? []) {
-          if (crit.thema1 === van) {
-            crit.thema1 = naar
-            veranderd = true
-          }
-          if (crit.thema2 === van) {
-            crit.thema2 = naar
-            veranderd = true
-          }
+    for (const perceel of d.percelen ?? []) {
+      for (const crit of perceel.criteria ?? []) {
+        if (crit.thema1 === van) {
+          crit.thema1 = naar
+          veranderd = true
         }
-      }
-    } else if (soort === "leerpunt" && d.evaluatie) {
-      if (d.evaluatie.leerpunt1 === van) {
-        d.evaluatie.leerpunt1 = naar
-        veranderd = true
-      }
-      if (d.evaluatie.leerpunt2 === van) {
-        d.evaluatie.leerpunt2 = naar
-        veranderd = true
-      }
-    } else if (soort === "procesthema" && d.evaluatie) {
-      for (const asp of PROCES_ASPECTEN) {
-        if (d.evaluatie[asp.themaKey] === van) {
-          d.evaluatie[asp.themaKey] = naar
+        if (crit.thema2 === van) {
+          crit.thema2 = naar
           veranderd = true
         }
       }
