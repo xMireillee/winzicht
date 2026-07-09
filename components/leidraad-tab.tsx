@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import { FileUp, Sparkles, RotateCcw, ScrollText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import type { Leidraad, LeidraadAnalyse } from "@/lib/types"
 
 // De PDF gaat als base64 in de JSON-body naar de server. Het hostingplatform
@@ -48,7 +50,34 @@ export function LeidraadTab({
   const [analyse, setAnalyse] = useState<LeidraadAnalyse | null>(initieleAnalyse)
   const [uploadBezig, setUploadBezig] = useState(false)
   const [analyseBezig, setAnalyseBezig] = useState(false)
+  const [tekst, setTekst] = useState("")
   const fileInput = useRef<HTMLInputElement>(null)
+
+  // Stuurt PDF of geplakte tekst naar de server en verwerkt het resultaat.
+  async function verstuurLeidraad(payload: { pdfBase64?: string; text?: string; filename?: string }) {
+    setUploadBezig(true)
+    try {
+      const res = await fetch(`/api/aanbestedingen/${id}/leidraad`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(
+          data.error ??
+            `De leidraad kon niet worden geanalyseerd (foutcode ${res.status}). Bij een grote PDF: upload alleen het relevante hoofdstuk of plak de tekst.`,
+        )
+        return false
+      }
+      setLeidraad(data.leidraad)
+      setAnalyse(null) // hoort bij de oude leidraad
+      toast.success("Leidraad geanalyseerd en opgeslagen.")
+      return true
+    } finally {
+      setUploadBezig(false)
+    }
+  }
 
   async function upload(file: File) {
     if (file.type !== "application/pdf") {
@@ -57,33 +86,22 @@ export function LeidraadTab({
     }
     if (file.size > MAX_BYTES) {
       toast.error(
-        "De PDF is te groot (max ± 3 MB). Upload alleen het hoofdstuk met de beoordelingssystematiek — de gunningscriteria en de scoretabel.",
+        "De PDF is te groot (max ± 3 MB). Upload alleen het hoofdstuk met de beoordelingssystematiek — of plak de tekst hieronder.",
       )
       return
     }
-    setUploadBezig(true)
-    try {
-      const pdfBase64 = await fileToBase64(file)
-      const res = await fetch(`/api/aanbestedingen/${id}/leidraad`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ pdfBase64, filename: file.name }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error(
-          data.error ??
-            `De leidraad kon niet worden geanalyseerd (foutcode ${res.status}). Bij een grote PDF: upload alleen het relevante hoofdstuk.`,
-        )
-        return
-      }
-      setLeidraad(data.leidraad)
-      setAnalyse(null) // hoort bij de oude leidraad
-      toast.success("Leidraad geanalyseerd en opgeslagen.")
-    } finally {
-      setUploadBezig(false)
-      if (fileInput.current) fileInput.current.value = ""
+    const pdfBase64 = await fileToBase64(file)
+    await verstuurLeidraad({ pdfBase64, filename: file.name })
+    if (fileInput.current) fileInput.current.value = ""
+  }
+
+  async function analyseerTekst() {
+    if (tekst.trim() === "") {
+      toast.error("Plak eerst de tekst van de leidraad.")
+      return
     }
+    const ok = await verstuurLeidraad({ text: tekst })
+    if (ok) setTekst("")
   }
 
   async function genereerAnalyse() {
@@ -129,6 +147,29 @@ export function LeidraadTab({
               if (f) upload(f)
             }}
           />
+        </div>
+
+        {/* Alternatief: tekst plakken (handig bij grote leidraden of losse stukken) */}
+        <div className="mt-4 border-t border-border pt-4">
+          <Label htmlFor="leidraad-tekst" className="eyebrow">
+            Of plak de tekst
+          </Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Kopieer bijvoorbeeld alleen het hoofdstuk met de gunningscriteria en de scoretabel uit de leidraad.
+          </p>
+          <Textarea
+            id="leidraad-tekst"
+            rows={5}
+            value={tekst}
+            onChange={(e) => setTekst(e.target.value)}
+            placeholder="Plak hier de tekst van de leidraad…"
+            className="mt-2"
+          />
+          <div className="mt-2 flex justify-end">
+            <Button variant="outline" onClick={analyseerTekst} disabled={uploadBezig || tekst.trim() === ""}>
+              {uploadBezig ? "Bezig met analyseren…" : "Tekst analyseren"}
+            </Button>
+          </div>
         </div>
       </Card>
 

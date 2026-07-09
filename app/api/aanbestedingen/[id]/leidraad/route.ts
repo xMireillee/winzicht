@@ -65,26 +65,38 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "De AI-analyse is niet geconfigureerd (ANTHROPIC_API_KEY ontbreekt)." }, { status: 500 })
   }
 
-  let body: { pdfBase64?: string; filename?: string }
+  let body: { pdfBase64?: string; text?: string; filename?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: FOUTMELDING }, { status: 400 })
   }
 
-  const { pdfBase64, filename } = body
-  if (!pdfBase64) {
-    return NextResponse.json({ error: "Voeg een PDF van de leidraad toe." }, { status: 400 })
+  const { pdfBase64, text, filename } = body
+  if (!pdfBase64 && (!text || text.trim() === "")) {
+    return NextResponse.json({ error: "Voeg een PDF toe of plak de tekst van de leidraad." }, { status: 400 })
   }
-  const approxBytes = Math.floor((pdfBase64.length * 3) / 4)
-  if (approxBytes > MAX_BYTES) {
-    return NextResponse.json({ error: "Het bestand is te groot. Maximaal 20 MB toegestaan." }, { status: 413 })
+  if (pdfBase64) {
+    const approxBytes = Math.floor((pdfBase64.length * 3) / 4)
+    if (approxBytes > MAX_BYTES) {
+      return NextResponse.json({ error: "Het bestand is te groot. Maximaal 20 MB toegestaan." }, { status: 413 })
+    }
   }
 
   const { data: row, error: getErr } = await supabase.from("aanbestedingen").select("id, data").eq("id", id).single()
   if (getErr || !row) {
     return NextResponse.json({ error: "Aanbesteding niet gevonden." }, { status: 404 })
   }
+
+  // Bouw de inhoud op: PDF-document en/of geplakte tekst, gevolgd door de opdracht.
+  const content: unknown[] = []
+  if (pdfBase64) {
+    content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } })
+  }
+  if (text && text.trim() !== "") {
+    content.push({ type: "text", text: `Tekst van de leidraad:\n\n${text}` })
+  }
+  content.push({ type: "text", text: PROMPT })
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -97,15 +109,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 16000,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } },
-              { type: "text", text: PROMPT },
-            ],
-          },
-        ],
+        messages: [{ role: "user", content }],
       }),
     })
 
@@ -161,7 +165,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const leidraad: Leidraad = {
       ...genormaliseerd,
-      bron: filename ?? "",
+      bron: filename ?? (pdfBase64 ? "" : "Geplakte tekst"),
       geuploadOp: new Date().toISOString(),
       door: user.email ?? "",
     }
